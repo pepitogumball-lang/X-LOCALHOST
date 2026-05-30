@@ -75,7 +75,10 @@ def commit():
 def push():
     print(f"[4/4] Pushing to {REMOTE}/{BRANCH} …")
 
-    token = os.environ.get("GITHUB_TOKEN", "").strip()
+    token = (
+        os.environ.get("GITHUB_PERSONAL_ACCESS_TOKEN", "")
+        or os.environ.get("GITHUB_TOKEN", "")
+    ).strip()
     if not token:
         token = input(
             "  GitHub Personal Access Token (leave blank to push without token): "
