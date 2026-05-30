@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Flinger Local Server</string>
+    <string name="btn_select_folder">Seleccionar Carpeta</string>
+    <string name="btn_start_server">Iniciar Servidor</string>
+    <string name="btn_stop_server">Detener Servidor</string>
+    <string name="status_idle">Estado: Detenido</string>
+    <string name="status_running">Estado: Activo</string>
+    <string name="no_folder">Ninguna carpeta seleccionada</string>
+    <string name="notification_channel_name">Servidor Local</string>
+    <string name="notification_channel_desc">Notificaciones del servidor HTTP local</string>
+    <string name="notification_title">Servidor activo</string>
+    <string name="notification_text">Escuchando en puerto 8080</string>
+    <string name="permission_required">Se requieren permisos de notificación para el servicio en segundo plano.</string>
+    <string name="server_address_prefix">Dirección: http://</string>
+</resources>
