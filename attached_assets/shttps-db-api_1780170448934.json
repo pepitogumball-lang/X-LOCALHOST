@@ -1,0 +1,660 @@
+{
+    "openapi": "3.0.0",
+    "info": {
+        "title": "Simple HTTP Server Database API",
+        "version": "1.0.0"
+    },
+    "paths": {
+        "/api/db/schema": {
+            "get": {
+                "summary": "Get database schema information",
+                "parameters": [
+                    {
+                        "name": "table",
+                        "in": "query",
+                        "description": "Optional table name to get schema for a specific table",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Database schema information",
+                        "content": {
+                            "application/json": {
+                                "examples": {
+                                    "All tables schema": {
+                                        "value": [
+                                            {
+                                                "name": "users",
+                                                "rowCount": 42,
+                                                "hasRowId": true,
+                                                "columns": [
+                                                    {
+                                                        "name": "id",
+                                                        "type": "INTEGER",
+                                                        "primaryKey": true,
+                                                        "autoIncrement": true
+                                                    },
+                                                    {
+                                                        "name": "username",
+                                                        "type": "TEXT",
+                                                        "notNull": true
+                                                    },
+                                                    {
+                                                        "name": "email",
+                                                        "type": "TEXT",
+                                                        "notNull": true
+                                                    }
+                                                ]
+                                            },
+                                            {
+                                                "name": "products",
+                                                "rowCount": 156,
+                                                "hasRowId": true,
+                                                "columns": [
+                                                    {
+                                                        "name": "id",
+                                                        "type": "INTEGER",
+                                                        "primaryKey": true,
+                                                        "autoIncrement": true
+                                                    },
+                                                    {
+                                                        "name": "name",
+                                                        "type": "TEXT",
+                                                        "notNull": true
+                                                    },
+                                                    {
+                                                        "name": "price",
+                                                        "type": "REAL",
+                                                        "notNull": true
+                                                    }
+                                                ]
+                                            }
+                                        ]
+                                    },
+                                    "Single table schema": {
+                                        "value": {
+                                            "name": "users",
+                                            "rowCount": 42,
+                                            "hasRowId": true,
+                                            "columns": [
+                                                {
+                                                    "name": "id",
+                                                    "type": "INTEGER",
+                                                    "primaryKey": true,
+                                                    "autoIncrement": true
+                                                },
+                                                {
+                                                    "name": "username",
+                                                    "type": "TEXT",
+                                                    "notNull": true
+                                                },
+                                                {
+                                                    "name": "email",
+                                                    "type": "TEXT",
+                                                    "notNull": true
+                                                }
+                                            ]
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Database not found or table not found",
+                        "content": {
+                            "text/plain": {
+                                "examples": {
+                                    "Not found": {
+                                        "value": "Not found"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/db/table": {
+            "get": {
+                "summary": "Get table data",
+                "description": "Retrieves data from a table with filtering, sorting, and pagination options. For requests with large filter parameters, consider using the POST method instead.",
+                "parameters": [
+                    {
+                        "name": "table",
+                        "in": "query",
+                        "description": "Table name to query",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "columns",
+                        "in": "query",
+                        "description": "Comma-separated list of columns to retrieve",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "offset",
+                        "in": "query",
+                        "description": "Number of rows to skip",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "limit",
+                        "in": "query",
+                        "description": "Maximum number of rows to return",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "sort",
+                        "in": "query",
+                        "description": "Column to sort by",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "sort-order",
+                        "in": "query",
+                        "description": "Sort direction (asc or desc)",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": ["asc", "desc"]
+                        }
+                    },
+                    {
+                        "name": "includeRowId",
+                        "in": "query",
+                        "description": "Whether to include row ID in the response",
+                        "required": false,
+                        "schema": {
+                            "type": "boolean"
+                        }
+                    },
+                    {
+                        "name": "rowsAsObjects",
+                        "in": "query",
+                        "description": "Whether to include row data as objects in the response (otherwise, rows are returned as arrays)",
+                        "required": false,
+                        "schema": {
+                            "type": "boolean"
+                        }
+                    },
+                    {
+                        "name": "includeTotal",
+                        "in": "query",
+                        "description": "Whether to include total row count in the response",
+                        "required": false,
+                        "schema": {
+                            "type": "boolean",
+                            "default": false
+                        }
+                    },
+                    {
+                        "name": "filters",
+                        "in": "query",
+                        "description": "JSON-encoded filter conditions. For large filter parameters, consider using the POST method instead. The JSON object should have the format: {\"clauses\":[\"column=\", \"column>\", \"column<\", \"column]\", \"column[\", \"column!\", \"column?\", \"column∈2\"], \"args\":[value1, value2, ...]}. The 'clauses' array contains filter conditions where: '=' means equal, '>' means greater than, '<' means less than, ']' means greater than or equal, '[' means less than or equal, '!' means not equal, '?' means LIKE, '∈' followed by a number means IN with that many values, and '∉' followed by a number means NOT IN with that many values. The 'args' array contains the corresponding values in the same order. For example: {\"clauses\":[\"id=\", \"age>\"], \"args\":[5, 18]}. All clauses are AND-ed together.",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Table data",
+                        "content": {
+                            "application/json": {
+                                "examples": {
+                                    "Table data response (rowsAsObjects=false)": {
+                                        "value": {
+                                            "total": 2,
+                                            "data": [
+                                                [1, "john_doe", "john@example.com"],
+                                                [2, "jane_smith", "jane@example.com"]
+                                            ]
+                                        }
+                                    },
+                                    "Table data response (rowsAsObjects=true)": {
+                                        "value": {
+                                            "total": 2,
+                                            "data": [
+                                                {
+                                                    "id": 1,
+                                                    "username": "john_doe",
+                                                    "email": "john@example.com"
+                                                },
+                                                {
+                                                    "id": 2,
+                                                    "username": "jane_smith",
+                                                    "email": "jane@example.com"
+                                                }
+                                            ]
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request"
+                    },
+                    "404": {
+                        "description": "Database or table not found",
+                        "content": {
+                            "text/plain": {
+                                "examples": {
+                                    "Not found": {
+                                        "value": "Not found"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/db/insert": {
+            "post": {
+                "summary": "Insert data into a table",
+                "requestBody": {
+                    "description": "Table name and values to insert",
+                    "required": true,
+                    "content": {
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "table": {
+                                        "type": "string",
+                                        "description": "Table name to insert into"
+                                    },
+                                    "values": {
+                                        "type": "string",
+                                        "description": "JSON-encoded object with column values"
+                                    }
+                                }
+                            },
+                            "examples": {
+                                "Insert a new user": {
+                                    "value": {
+                                        "table": "users",
+                                        "values": "{\"username\":\"new_user\",\"email\":\"new@example.com\"}"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Data inserted successfully",
+                        "content": {
+                            "application/json": {
+                                "examples": {
+                                    "Insert response": {
+                                        "value": {
+                                            "generated_id": 3
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request"
+                    },
+                    "403": {
+                        "description": "Database table data editing API is disabled"
+                    },
+                    "404": {
+                        "description": "Database or table not found",
+                        "content": {
+                            "text/plain": {
+                                "examples": {
+                                    "Not found": {
+                                        "value": "Not found"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/db/update": {
+            "put": {
+                "summary": "Update data in a table",
+                "requestBody": {
+                    "description": "Table name, values to update, and filter conditions",
+                    "required": true,
+                    "content": {
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "table": {
+                                        "type": "string",
+                                        "description": "Table name to update"
+                                    },
+                                    "values": {
+                                        "type": "string",
+                                        "description": "JSON-encoded object with column values to update"
+                                    },
+                                    "filters": {
+                                        "type": "string",
+                                        "description": "JSON-encoded filter conditions. The JSON object should have the format: {\"clauses\":[\"column=\", \"column>\", \"column<\", \"column]\", \"column[\", \"column!\", \"column?\", \"column∈2\"], \"args\":[value1, value2, ...]}. The 'clauses' array contains filter conditions where: '=' means equal, '>' means greater than, '<' means less than, ']' means greater than or equal, '[' means less than or equal, '!' means not equal, '?' means LIKE, '∈' followed by a number means IN with that many values, and '∉' followed by a number means NOT IN with that many values. The 'args' array contains the corresponding values in the same order. For example: {\"clauses\":[\"id=\", \"age>\"], \"args\":[5, 18]}. All clauses are AND-ed together."
+                                    }
+                                }
+                            },
+                            "examples": {
+                                "Update user email": {
+                                    "value": {
+                                        "table": "users",
+                                        "values": "{\"email\":\"updated@example.com\"}",
+                                        "filters": "{\"clauses\":[\"id=\"],\"args\":[1]}"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Data updated successfully",
+                        "content": {
+                            "application/json": {
+                                "examples": {
+                                    "Update response": {
+                                        "value": {
+                                            "updated_rows": 1
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request"
+                    },
+                    "403": {
+                        "description": "Database table data editing API is disabled"
+                    },
+                    "404": {
+                        "description": "Database or table not found",
+                        "content": {
+                            "text/plain": {
+                                "examples": {
+                                    "Not found": {
+                                        "value": "Not found"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/db/delete": {
+            "delete": {
+                "summary": "Delete data from a table",
+                "requestBody": {
+                    "description": "Table name and filter conditions",
+                    "required": true,
+                    "content": {
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "table": {
+                                        "type": "string",
+                                        "description": "Table name to delete from"
+                                    },
+                                    "filters": {
+                                        "type": "string",
+                                        "description": "JSON-encoded filter conditions"
+                                    }
+                                }
+                            },
+                            "examples": {
+                                "Delete user by ID": {
+                                    "value": {
+                                        "table": "users",
+                                        "filters": "{\"clauses\":[\"id=\"],\"args\":[1]}"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Data deleted successfully",
+                        "content": {
+                            "application/json": {
+                                "examples": {
+                                    "Delete response": {
+                                        "value": {
+                                            "deleted_rows": 1
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request"
+                    },
+                    "403": {
+                        "description": "Database table data editing API is disabled"
+                    },
+                    "404": {
+                        "description": "Database or table not found",
+                        "content": {
+                            "text/plain": {
+                                "examples": {
+                                    "Not found": {
+                                        "value": "Not found"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/db/query": {
+            "post": {
+                "summary": "Execute custom SQL query",
+                "parameters": [
+                    {
+                        "name": "limit",
+                        "in": "query",
+                        "description": "Maximum number of rows to return",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 100
+                        }
+                    },
+                    {
+                        "name": "offset",
+                        "in": "query",
+                        "description": "Number of rows to skip",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 0
+                        }
+                    },
+                    {
+                        "name": "includeNames",
+                        "in": "query",
+                        "description": "Whether to include column names in the response",
+                        "required": false,
+                        "schema": {
+                            "type": "boolean",
+                            "default": false
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "description": "SQL query to execute",
+                    "required": true,
+                    "content": {
+                        "text/plain": {
+                            "schema": {
+                                "type": "string"
+                            },
+                            "examples": {
+                                "Select query": {
+                                    "value": "SELECT * FROM users WHERE username LIKE '%john%'"
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Query results",
+                        "content": {
+                            "application/json": {
+                                "examples": {
+                                    "Query response": {
+                                        "value": {
+                                            "offset": 0,
+                                            "limit": 100,
+                                            "columns": ["id", "username", "email"],
+                                            "data": [
+                                                [1, "john_doe", "john@example.com"]
+                                            ]
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Database custom SQL remote API is disabled"
+                    },
+                    "404": {
+                        "description": "Database not found",
+                        "content": {
+                            "text/plain": {
+                                "examples": {
+                                    "Not found": {
+                                        "value": "Not found"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "420": {
+                        "description": "Method Failure",
+                        "content": {
+                            "text/plain": {
+                                "examples": {
+                                    "SQL error": {
+                                        "value": "SQL syntax error"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/db/cell-data": {
+            "get": {
+                "summary": "Get single cell data from a table",
+                "description": "Retrieves data from a single cell in a table. For requests with large filter parameters, consider using the POST method instead.",
+                "parameters": [
+                    {
+                        "name": "table",
+                        "in": "query",
+                        "description": "Table name",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "column",
+                        "in": "query",
+                        "description": "Column name",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "filters",
+                        "in": "query",
+                        "description": "JSON-encoded filter conditions. For large filter parameters, consider using the POST method instead. The JSON object should have the format: {\"clauses\":[\"column=\", \"column>\", \"column<\", \"column]\", \"column[\", \"column!\", \"column?\", \"column∈2\"], \"args\":[value1, value2, ...]}. The 'clauses' array contains filter conditions where: '=' means equal, '>' means greater than, '<' means less than, ']' means greater than or equal, '[' means less than or equal, '!' means not equal, '?' means LIKE, '∈' followed by a number means IN with that many values, and '∉' followed by a number means NOT IN with that many values. The 'args' array contains the corresponding values in the same order. For example: {\"clauses\":[\"id=\", \"age>\"], \"args\":[5, 18]}. All clauses are AND-ed together.",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Cell data",
+                        "content": {
+                            "application/octet-stream": {
+                                "schema": {
+                                    "type": "string",
+                                    "format": "binary"
+                                }
+                            }
+                        }
+                    },
+                    "204": {
+                        "description": "Cell value is null or wrong type (only string or binary is supported)",
+                        "content": {
+                            "text/plain": {
+                                "examples": {
+                                    "No content": {
+                                        "value": "No Content"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request"
+                    },
+                    "404": {
+                        "description": "Database, table, or cell not found",
+                        "content": {
+                            "text/plain": {
+                                "examples": {
+                                    "Not found": {
+                                        "value": "Not found"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+} 
