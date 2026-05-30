@@ -1,0 +1,204 @@
+{
+    "openapi": "3.0.0",
+    "info": {
+        "title": "Simple HTTP Server System API",
+        "version": "1.0.0"
+    },
+    "paths": {
+        "/api/system/status": {
+            "get": {
+                "summary": "Get system status (starting from v2.3.0)",
+                "description": "Retrieves system status information including user details, filesystem statistics, database status, and system information. The response includes different sections based on user permissions and optional scope filtering via query parameter.",
+                "parameters": [
+                    {
+                        "name": "scopes",
+                        "in": "query",
+                        "description": "Comma-separated list of scopes to include in response. Valid values: 'user', 'filesystem', 'database', 'system'. If not provided, all available scopes are included.",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "example": "user,system"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Status information retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "user": {
+                                            "type": "object",
+                                            "description": "User information (only included if user is authenticated and 'user' scope is requested or no scopes specified)",
+                                            "properties": {
+                                                "identity": {
+                                                    "type": "string",
+                                                    "description": "User identity (username)"
+                                                },
+                                                "role": {
+                                                    "type": "string",
+                                                    "nullable": true,
+                                                    "description": "User role (null if not set)"
+                                                },
+                                                "system_rights": {
+                                                    "type": "string",
+                                                    "description": "User system rights as string representation"
+                                                },
+                                                "db_rights": {
+                                                    "type": "string",
+                                                    "description": "User database rights as string representation"
+                                                },
+                                                "fs_rights": {
+                                                    "type": "string",
+                                                    "description": "User filesystem rights as string representation"
+                                                },
+                                                "storage_limit_bytes": {
+                                                    "type": "integer",
+                                                    "nullable": true,
+                                                    "description": "User storage limit in bytes (null if unlimited)"
+                                                },
+                                                "storage_used_bytes": {
+                                                    "type": "integer",
+                                                    "description": "User storage used in bytes"
+                                                },
+                                                "registered_at": {
+                                                    "type": "integer",
+                                                    "description": "User registration timestamp in milliseconds"
+                                                }
+                                            }
+                                        },
+                                        "filesystem": {
+                                            "type": "object",
+                                            "description": "Filesystem information (only included if user has READ_STATUS right and 'filesystem' scope is requested or no scopes specified)",
+                                            "properties": {
+                                                "storage_path": {
+                                                    "type": "string",
+                                                    "description": "Root storage path URI"
+                                                },
+                                                "total_space_bytes": {
+                                                    "type": "integer",
+                                                    "description": "Total filesystem space in bytes"
+                                                },
+                                                "free_space_bytes": {
+                                                    "type": "integer",
+                                                    "description": "Free filesystem space in bytes"
+                                                }
+                                            }
+                                        },
+                                        "database": {
+                                            "type": "object",
+                                            "description": "Database status information (only included if database is configured, user has READ_STATUS right, and 'database' scope is requested or no scopes specified). Properties depend on database implementation.",
+                                            "additionalProperties": true
+                                        },
+                                        "system": {
+                                            "type": "object",
+                                            "description": "System information (only included if user has READ_STATUS right and 'system' scope is requested or no scopes specified)",
+                                            "properties": {
+                                                "server_name": {
+                                                    "type": "string",
+                                                    "description": "Server name"
+                                                },
+                                                "server_version": {
+                                                    "type": "string",
+                                                    "description": "Server version"
+                                                },
+                                                "server_uptime": {
+                                                    "type": "integer",
+                                                    "description": "Server uptime in milliseconds"
+                                                },
+                                                "os_name": {
+                                                    "type": "string",
+                                                    "description": "Operating system name"
+                                                },
+                                                "os_version": {
+                                                    "type": "string",
+                                                    "description": "Operating system version"
+                                                },
+                                                "java_runtime_name": {
+                                                    "type": "string",
+                                                    "description": "Java runtime name"
+                                                },
+                                                "java_vm_version": {
+                                                    "type": "string",
+                                                    "description": "Java VM version"
+                                                },
+                                                "cpu_cores": {
+                                                    "type": "integer",
+                                                    "description": "Number of CPU cores"
+                                                },
+                                                "cpu_arch": {
+                                                    "type": "string",
+                                                    "description": "CPU architecture"
+                                                },
+                                                "ram_total_bytes": {
+                                                    "type": "integer",
+                                                    "description": "Total JVM RAM in bytes"
+                                                },
+                                                "ram_free_bytes": {
+                                                    "type": "integer",
+                                                    "description": "Free JVM RAM in bytes"
+                                                }
+                                            }
+                                        }
+                                    }
+                                },
+                                "examples": {
+                                    "Full Status": {
+                                        "value": {
+                                            "user": {
+                                                "identity": "admin",
+                                                "role": "administrator",
+                                                "system_rights": "[READ_STATUS, WRITE_CONFIG]",
+                                                "db_rights": "[READ, WRITE]",
+                                                "fs_rights": "[READ, WRITE]",
+                                                "storage_limit_bytes": 1073741824,
+                                                "storage_used_bytes": 524288000,
+                                                "registered_at": 1609459200000
+                                            },
+                                            "filesystem": {
+                                                "storage_path": "file:///path/to/storage",
+                                                "total_space_bytes": 500000000000,
+                                                "free_space_bytes": 300000000000
+                                            },
+                                            "database": {
+                                                "status": "connected",
+                                                "version": "3.42.0"
+                                            },
+                                            "system": {
+                                                "server_name": "SimpleHTTPSrv",
+                                                "server_version": "1.0.0",
+                                                "server_uptime": 86400000,
+                                                "os_name": "Linux",
+                                                "os_version": "5.15.0",
+                                                "java_runtime_name": "OpenJDK Runtime Environment",
+                                                "java_vm_version": "17.0.1",
+                                                "cpu_cores": 8,
+                                                "cpu_arch": "amd64",
+                                                "ram_total_bytes": 2147483648,
+                                                "ram_free_bytes": 1073741824
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "405": {
+                        "description": "Method not allowed",
+                        "content": {
+                            "text/plain": {
+                                "examples": {
+                                    "Method Not Allowed": {
+                                        "value": "Method Not Allowed"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
