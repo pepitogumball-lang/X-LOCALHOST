@@ -2,6 +2,7 @@ package com.flinger.localserver
 
 import android.content.Context
 import android.net.Uri
+import android.webkit.MimeTypeMap
 import androidx.documentfile.provider.DocumentFile
 import fi.iki.elonen.NanoHTTPD
 import java.io.IOException
@@ -124,26 +125,82 @@ class LocalWebServer(
     }
 
     private fun guessMimeFromName(name: String): String {
-        return when (name.substringAfterLast('.').lowercase()) {
-            "html", "htm" -> "text/html"
+        val extension = name.substringAfterLast('.', "").lowercase()
+
+        if (extension.isEmpty() || extension == name.lowercase()) {
+            return "application/octet-stream"
+        }
+
+        val mimeTypeFromAndroid = MimeTypeMap.getSingleton().getMimeTypeFromExtension(extension)
+        if (mimeTypeFromAndroid != null) {
+            return mimeTypeFromAndroid
+        }
+
+        return when (extension) {
+            "html", "htm", "shtml" -> "text/html"
             "css" -> "text/css"
-            "js" -> "application/javascript"
+            "js", "mjs" -> "application/javascript"
+            "ts" -> "application/typescript"
             "json" -> "application/json"
             "xml" -> "application/xml"
-            "pdf" -> "application/pdf"
+            "txt", "log", "ini", "env" -> "text/plain"
+            "md", "markdown" -> "text/markdown"
+            "csv" -> "text/csv"
+            "yaml", "yml" -> "application/x-yaml"
+            "wasm" -> "application/wasm"
             "png" -> "image/png"
-            "jpg", "jpeg" -> "image/jpeg"
+            "jpg", "jpeg", "jpe" -> "image/jpeg"
             "gif" -> "image/gif"
-            "svg" -> "image/svg+xml"
+            "svg", "svgz" -> "image/svg+xml"
             "webp" -> "image/webp"
-            "mp4" -> "video/mp4"
-            "mkv" -> "video/x-matroska"
+            "avif" -> "image/avif"
+            "heic", "heif" -> "image/heic"
+            "ico" -> "image/x-icon"
+            "bmp" -> "image/bmp"
+            "tiff", "tif" -> "image/tiff"
+            "psd" -> "image/vnd.adobe.photoshop"
             "mp3" -> "audio/mpeg"
-            "ogg" -> "audio/ogg"
+            "ogg", "oga" -> "audio/ogg"
             "wav" -> "audio/wav"
+            "flac" -> "audio/flac"
+            "m4a", "aac" -> "audio/mp4"
+            "weba" -> "audio/webm"
+            "opus" -> "audio/opus"
+            "mid", "midi" -> "audio/midi"
+            "mp4", "m4v" -> "video/mp4"
+            "mkv" -> "video/x-matroska"
+            "webm" -> "video/webm"
+            "avi" -> "video/x-msvideo"
+            "mov" -> "video/quicktime"
+            "flv" -> "video/x-flv"
+            "wmv" -> "video/x-ms-wmv"
+            "3gp" -> "video/3gpp"
+            "woff" -> "font/woff"
+            "woff2" -> "font/woff2"
+            "ttf" -> "font/ttf"
+            "otf" -> "font/otf"
+            "eot" -> "application/vnd.ms-fontobject"
+            "pdf" -> "application/pdf"
+            "doc" -> "application/msword"
+            "docx" -> "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+            "xls" -> "application/vnd.ms-excel"
+            "xlsx" -> "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            "ppt" -> "application/vnd.ms-powerpoint"
+            "pptx" -> "application/vnd.openxmlformats-officedocument.presentationml.presentation"
+            "rtf" -> "application/rtf"
+            "epub" -> "application/epub+zip"
             "zip" -> "application/zip"
-            "txt" -> "text/plain"
-            "md" -> "text/markdown"
+            "rar" -> "application/vnd.rar"
+            "7z" -> "application/x-7z-compressed"
+            "tar" -> "application/x-tar"
+            "gz", "gzip" -> "application/gzip"
+            "bz2" -> "application/x-bzip2"
+            "apk" -> "application/vnd.android.package-archive"
+            "iso" -> "application/x-iso9660-image"
+            "kt", "java", "c", "cpp", "h", "cs", "py", "sh", "bat" -> "text/plain"
+            "sql" -> "application/sql"
+            "sqlite", "db" -> "application/vnd.sqlite3"
+            "ics" -> "text/calendar"
             else -> "application/octet-stream"
         }
     }
