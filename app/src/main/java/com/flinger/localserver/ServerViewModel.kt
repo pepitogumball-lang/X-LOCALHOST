@@ -89,14 +89,22 @@ class ServerViewModel(application: Application) : AndroidViewModel(application) 
     fun startServer(context: android.content.Context) {
         val config = _uiState.value.config
         if (config.folderUri == null) {
-            addLog("Error: selecciona una carpeta primero.")
+            addLog("Error: select a folder first.")
             return
         }
         refreshNetworkInfo()
+
+        // Persist autostart preference so BootReceiver can read it
+        context.getSharedPreferences("xlocalhost_prefs", android.content.Context.MODE_PRIVATE)
+            .edit()
+            .putBoolean("autostart_on_boot", config.autostartOnBoot)
+            .apply()
+
         val intent = Intent(context, ServerService::class.java).apply {
             action = ServerService.ACTION_START
             putExtra(ServerService.EXTRA_FOLDER_URI, config.folderUri.toString())
             putExtra(ServerService.EXTRA_PORT, config.port)
+            putExtra(ServerService.EXTRA_ALLOW_MOD, config.allowModification)
         }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             context.startForegroundService(intent)
@@ -104,7 +112,7 @@ class ServerViewModel(application: Application) : AndroidViewModel(application) 
             context.startService(intent)
         }
         _uiState.update { it.copy(isRunning = true) }
-        addLog("Servidor iniciado → ${_uiState.value.serverUrl}")
+        addLog("Server started → ${_uiState.value.serverUrl}")
     }
 
     fun stopServer(context: android.content.Context) {
