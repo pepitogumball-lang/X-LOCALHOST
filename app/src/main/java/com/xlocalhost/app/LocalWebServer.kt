@@ -1,4 +1,4 @@
-package com.flinger.localserver
+package com.xlocalhost.app
 
 import android.content.Context
 import android.database.sqlite.SQLiteDatabase
@@ -751,7 +751,15 @@ class LocalWebServer(
 
     private fun serveStatic(session: IHTTPSession): Response {
         val m    = session.method
+        val uri  = session.uri
         val path = session.uri.trimStart('/').trimEnd('/')
+
+        // Serve combined_styles.css
+        if (uri == "/combined_styles.css") {
+            val cssStream = context.assets.open("combined_styles.css")
+            return newFixedLengthResponse(Status.OK, "text/css", cssStream, cssStream.available().toLong())
+        }
+
         val root = DocumentFile.fromTreeUri(context, folderUri)
             ?: return newFixedLengthResponse(Status.INTERNAL_ERROR, MIME_PLAINTEXT, "Cannot access root folder")
 
@@ -810,11 +818,8 @@ class LocalWebServer(
         sb.append("<!DOCTYPE html><html lang=\"en\"><head><meta charset=\"UTF-8\">")
         sb.append("<meta name=\"viewport\" content=\"width=device-width,initial-scale=1\">")
         sb.append("<title>x-localhost — $path</title>")
-        sb.append("<style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:'Courier New',monospace;background:#0d1117;color:#c9d1d9;padding:24px}")
-        sb.append("h2{color:#58a6ff;border-bottom:1px solid #21262d;padding-bottom:12px;margin-bottom:16px;font-size:1.1rem}")
-        sb.append("a{display:flex;align-items:center;gap:8px;padding:8px 12px;text-decoration:none;color:#c9d1d9;border-radius:6px;transition:background .15s}")
-        sb.append("a:hover{background:#161b22}.dir{color:#58a6ff}.meta{margin-left:auto;color:#6e7681;font-size:.8rem;white-space:nowrap}")
-        sb.append("footer{margin-top:32px;color:#6e7681;font-size:.75rem;border-top:1px solid #21262d;padding-top:12px}</style></head><body>")
+        sb.append("<link rel=\"stylesheet\" href=\"/combined_styles.css\">\n")
+        sb.append("</head><body>")
         sb.append("<h2>&#128193; $path</h2>")
         if (path != "/") {
             val parent = if (path.count { it == '/' } == 1) "/" else path.substringBeforeLast("/")

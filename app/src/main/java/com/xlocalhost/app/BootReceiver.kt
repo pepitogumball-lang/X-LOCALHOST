@@ -1,4 +1,4 @@
-package com.flinger.localserver
+package com.xlocalhost.app
 
 import android.content.BroadcastReceiver
 import android.content.Context
