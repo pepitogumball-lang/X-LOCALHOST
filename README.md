@@ -1,4 +1,4 @@
-# Flinger Local Server
+# X-LOCALHOST
 
 Aplicación Android nativa (Kotlin, API 24+) que levanta un servidor HTTP en el puerto 8080 para servir archivos desde una carpeta seleccionada por el usuario — similar a SimpleServer / http.server de Python, pero en Android.
 
@@ -46,3 +46,7 @@ El APK queda en `app/build/outputs/apk/debug/app-debug.apk`.
 export GITHUB_PERSONAL_ACCESS_TOKEN=tu_token_aqui
 python3 ci_loop.py
 ```
+
+
+## 📖 Instrucciones para Manus IA
+Consulta [ManusIA.md](ManusIA.md) para el protocolo de desarrollo y debugging.
