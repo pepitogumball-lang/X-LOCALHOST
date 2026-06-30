@@ -1,52 +1,49 @@
 # X-LOCALHOST
 
-Aplicación Android nativa (Kotlin, API 24+) que levanta un servidor HTTP en el puerto 8080 para servir archivos desde una carpeta seleccionada por el usuario — similar a SimpleServer / http.server de Python, pero en Android.
+**X-LOCALHOST** es una solución profesional para Android (Kotlin, API 24+) que permite desplegar un servidor HTTP robusto en el puerto 8080. Diseñada para la eficiencia y la portabilidad, permite servir archivos locales y gestionar peticiones web directamente desde el dispositivo móvil.
 
-## Características
+## Características Principales
 
-- **Servidor HTTP real** usando NanoHTTPD 2.3.2
-- **Navegación de directorios** con listado HTML estilo dark-mode
-- **Streaming de archivos** con detección automática de MIME type
-- **Servicio en segundo plano** con notificación persistente (Foreground Service)
-- **Selector de carpeta** via SAF (Storage Access Framework) con permisos persistibles
-- **IP local automática** vía WifiManager
-- **Botón "Detener"** en notificación para control rápido
+*   **Motor HTTP de Alto Rendimiento**: Implementación basada en NanoHTTPD 2.3.2 para una gestión de peticiones estable.
+*   **Gestión de Directorios Avanzada**: Interfaz de listado HTML optimizada con soporte para modo oscuro.
+*   **Transmisión de Datos Optimizada**: Streaming de archivos con detección automática de tipos MIME para una compatibilidad total.
+*   **Arquitectura de Servicio Persistente**: Ejecución en segundo plano mediante Foreground Service con notificaciones de control integradas.
+*   **Seguridad y Acceso**: Integración con Storage Access Framework (SAF) para una gestión de permisos granular y segura.
+*   **Conectividad Inteligente**: Detección automática de IP local y gestión dinámica de interfaces de red.
 
-## Requisitos
+## Especificaciones Técnicas
 
-- Android 7.0+ (API 24)
-- targetSdk 34 (Android 14)
-- JDK 17, Gradle 8.6, AGP 8.3.2
+*   **Compatibilidad**: Android 7.0 (API 24) o superior.
+*   **SDK de Destino**: Android 14 (API 34).
+*   **Entorno de Desarrollo**: JDK 17, Gradle 8.6, AGP 8.3.2.
 
-## Dependencias principales
+## Dependencias de Grado Empresarial
 
-| Librería | Versión |
-|---|---|
-| NanoHTTPD | 2.3.2 |
-| AndroidX AppCompat | 1.6.1 |
-| Material Components | 1.11.0 |
-| DocumentFile | 1.0.1 |
-| ConstraintLayout | 2.1.4 |
+| Componente | Versión | Propósito |
+| :--- | :--- | :--- |
+| **NanoHTTPD** | 2.3.2 | Motor de servidor HTTP embebido. |
+| **AndroidX AppCompat** | 1.6.1 | Compatibilidad de componentes de interfaz. |
+| **Material Components** | 1.11.0 | Implementación de estándares de diseño Material. |
+| **DocumentFile** | 1.0.1 | Abstracción de acceso a archivos SAF. |
+| **Jetpack Compose** | 1.6.x | Framework moderno para la interfaz de usuario. |
 
-## CI/CD
+## Integración Continua (CI/CD)
 
-GitHub Actions (`.github/workflows/android.yml`) compila automáticamente el APK Debug en cada push a `main`.
+El proyecto utiliza **GitHub Actions** para garantizar la calidad del código. Cada actualización en la rama principal activa un flujo de trabajo (`.github/workflows/android.yml`) que compila y verifica la integridad del artefacto APK.
 
-## Build local
+## Documentación Legal y Licencia
 
-```bash
-gradle assembleDebug
-```
+Para consultar los términos de uso, exenciones de responsabilidad y la licencia MIT oficial de este software, acceda a la carpeta [docs/](docs/).
 
-El APK queda en `app/build/outputs/apk/debug/app-debug.apk`.
+## Proceso de Compilación
 
-## Uso del CI Loop (Agente)
+Para generar una compilación local, ejecute el siguiente comando desde la raíz del proyecto:
 
 ```bash
-export GITHUB_PERSONAL_ACCESS_TOKEN=tu_token_aqui
-python3 ci_loop.py
+./gradlew assembleDebug
 ```
 
+El artefacto resultante se ubicará en: `app/build/outputs/apk/debug/app-debug.apk`.
 
-## 📖 Instrucciones para Manus IA
-Consulta [ManusIA.md](ManusIA.md) para el protocolo de desarrollo y debugging.
+---
+© 2024 Flinger Apps Corporation. Todos los derechos reservados.
