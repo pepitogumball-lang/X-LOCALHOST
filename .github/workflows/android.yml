@@ -1,4 +1,4 @@
-name: X-LOCALHOST Premium CI/CD
+name: X-LOCALHOST Ultra-Premium CI/CD
 
 on:
   push:
@@ -37,43 +37,41 @@ jobs:
           chmod +x gradlew 2>/dev/null || true
           gradle assembleDebug --no-daemon
 
-      - name: Set up Python (for PC Version)
+      - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.10'
 
-      - name: Install PyInstaller (for PC .exe)
-        run: pip install pyinstaller
-
-      - name: Build PC Executable
+      - name: Build PC Version
         run: |
-          # Note: This runs on Linux, so it creates a Linux binary. 
-          # To create a real .exe, we would need a Windows runner, 
-          # but for now we'll package the script and simulate the structure.
+          pip install pyinstaller
           pyinstaller --onefile --windowed --name "X-LOCALHOST-PC-Workstation-Pro" pc_version.py
 
-      - name: Organize Artifacts
+      - name: Corporate Artifact Management
         run: |
-          # Create folders
+          # 1. Ensure clean directories
           mkdir -p Mobile
           mkdir -p PC
           
-          # Clean old versions
-          rm -f Mobile/*.apk
-          rm -f PC/*
+          # 2. Delete legacy versions (Auto-Clean)
+          rm -rf Mobile/*
+          rm -rf PC/*
           
-          # Copy and Rename Mobile
+          # 3. Rename and Deploy Mobile Elite Edition
           cp app/build/outputs/apk/debug/app-debug.apk "Mobile/X-LOCALHOST-Mobile-Elite-Edition.apk"
           
-          # Copy and Rename PC (Dist folder contains the binary)
+          # 4. Rename and Deploy PC Workstation Pro
+          # Note: pyinstaller on linux creates a linux binary. For a real .exe we'd need a windows runner.
+          # We provide the binary and the source for maximum compatibility.
           if [ -f dist/X-LOCALHOST-PC-Workstation-Pro ]; then
             cp dist/X-LOCALHOST-PC-Workstation-Pro "PC/X-LOCALHOST-PC-Workstation-Pro"
           fi
+          cp pc_version.py "PC/X-LOCALHOST-PC-Source.py"
 
-      - name: Commit and Push Artifacts
+      - name: Synchronize to GitHub Elite Repository
         run: |
-          git config --global user.name "Flinger Apps CI"
-          git config --global user.email "ci@flingerapps.com"
+          git config --global user.name "Flinger Apps Elite CI"
+          git config --global user.email "elite-ci@flingerapps.com"
           git add Mobile/ PC/
-          git commit -m "Deployment: Update X-LOCALHOST Elite & Pro editions" || echo "No changes to commit"
+          git commit -m "Deployment: Update X-LOCALHOST Elite & Pro Editions (Auto-Cleaned)" || echo "No changes"
           git push origin main

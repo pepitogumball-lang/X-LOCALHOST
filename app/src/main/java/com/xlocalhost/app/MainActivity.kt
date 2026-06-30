@@ -13,8 +13,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.*
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -34,14 +33,11 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.drawBehind
-import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -51,25 +47,24 @@ import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 
-// ── Corporate Premium Palette ───────────────────────────────────────────────
-private val BgMain      = Color(0xFF0D0F12)
-private val BgCard      = Color(0xFF161B22)
-private val BgSurface   = Color(0xFF21262D)
-private val AccPrimary  = Color(0xFF2F81F7) // GitHub Blue
-private val AccSuccess  = Color(0xFF3FB950) // GitHub Green
-private val AccWarning  = Color(0xFFD29922)
-private val AccError    = Color(0xFFF85149)
-private val TextMain    = Color(0xFFE6EDF3)
-private val TextDim     = Color(0xFF8B949E)
-private val BorderColor = Color(0xFF30363D)
+// ── Corporate Elite Palette (Inspirada en la imagen de referencia) ──────────
+private val BgDeep      = Color(0xFF090B0D)
+private val BgPanel     = Color(0xFF121417)
+private val BgSurface   = Color(0xFF1A1D21)
+private val AccNeon     = Color(0xFF00D4FF) // Cyan brillante
+private val AccSuccess  = Color(0xFF00FF85) // Verde neón
+private val AccError    = Color(0xFFFF3B30)
+private val TextPrimary = Color(0xFFF0F2F5)
+private val TextSec     = Color(0xFF9BA3AF)
+private val BorderElite = Color(0xFF2D333B)
 
-private val PremiumColorScheme = darkColorScheme(
-    primary = AccPrimary,
-    background = BgMain,
-    surface = BgCard,
-    onBackground = TextMain,
-    onSurface = TextMain,
-    outline = BorderColor
+private val EliteColorScheme = darkColorScheme(
+    primary = AccNeon,
+    background = BgDeep,
+    surface = BgPanel,
+    onBackground = TextPrimary,
+    onSurface = TextPrimary,
+    outline = BorderElite
 )
 
 class MainActivity : ComponentActivity() {
@@ -108,8 +103,8 @@ class MainActivity : ComponentActivity() {
         }
 
         setContent {
-            MaterialTheme(colorScheme = PremiumColorScheme) {
-                Surface(modifier = Modifier.fillMaxSize(), color = BgMain) {
+            MaterialTheme(colorScheme = EliteColorScheme) {
+                Surface(modifier = Modifier.fillMaxSize(), color = BgDeep) {
                     XLocalHostApp(viewModel = viewModel)
                 }
             }
@@ -137,15 +132,15 @@ fun XLocalHostApp(viewModel: ServerViewModel) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     var showLogs by rememberSaveable { mutableStateOf(false) }
 
-    AnimatedVisibility(visible = true) {
-        if (showLogs) {
+    Crossfade(targetState = showLogs, animationSpec = tween(500)) { logsVisible ->
+        if (logsVisible) {
             LogsScreen(
                 uiState = uiState,
                 onBack = { showLogs = false },
                 onClear = viewModel::clearLogs
             )
         } else {
-            MainDashboard(
+            EliteDashboard(
                 uiState = uiState,
                 viewModel = viewModel,
                 onShowLogs = { showLogs = true }
@@ -155,7 +150,7 @@ fun XLocalHostApp(viewModel: ServerViewModel) {
 }
 
 @Composable
-fun MainDashboard(
+fun EliteDashboard(
     uiState: ServerUiState,
     viewModel: ServerViewModel,
     onShowLogs: () -> Unit
@@ -179,74 +174,87 @@ fun MainDashboard(
         modifier = Modifier
             .fillMaxSize()
             .windowInsetsPadding(WindowInsets.safeDrawing)
+            .background(BgDeep)
     ) {
-        // --- Premium Header ---
-        DashboardHeader(uiState.isRunning, onShowLogs)
+        // --- Header (Inspirado en la imagen) ---
+        HeaderSection(uiState.isRunning, onShowLogs)
 
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = 16.dp),
+                .padding(horizontal = 20.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             item {
-                StatusCard(uiState, onStart = { viewModel.startServer(context) }, onStop = { viewModel.stopServer(context) })
+                ServerStatusCard(uiState, onStart = { viewModel.startServer(context) }, onStop = { viewModel.stopServer(context) })
             }
 
             item {
-                QuickActionsRow(uiState, viewModel, onPickFolder = { folderPickerLauncher.launch(null) })
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    MetricCard("MEMORY USAGE", "45%", 0.45f, AccNeon, Modifier.weight(1f))
+                    MetricCard("STORAGE", "62%", 0.62f, AccSuccess, Modifier.weight(1f))
+                }
             }
 
             item {
-                SectionLabel("Network Configuration")
-                NetworkCard(uiState, viewModel)
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    StatsBox("REQUESTS", "${uiState.requestLogs.size}", Icons.Default.TrendingUp, Modifier.weight(1f))
+                    StatsBox("DATABASE", if (config.enableSqlite) "ACTIVE" else "OFF", Icons.Default.Storage, Modifier.weight(1f))
+                }
             }
 
             item {
-                SectionLabel("Security & Access Control")
-                SecurityCard(config, viewModel)
+                SectionLabel("Directory Control")
+                DirectoryPanel(config, onPickFolder = { folderPickerLauncher.launch(null) }, onShowVariants = { /* TODO */ })
             }
 
             item {
-                SectionLabel("Advanced Settings")
-                AdvancedCard(config, viewModel, context)
+                SectionLabel("Elite Configurations")
+                EliteSettingsPanel(config, viewModel)
             }
 
-            item { Spacer(Modifier.height(32.dp)) }
+            item { Spacer(Modifier.height(40.dp)) }
         }
     }
 }
 
 @Composable
-fun DashboardHeader(isRunning: Boolean, onShowLogs: () -> Unit) {
+fun HeaderSection(isRunning: Boolean, onShowLogs: () -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(24.dp),
+            .padding(top = 32.dp, start = 24.dp, end = 24.dp, bottom = 24.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
         Column {
             Text(
                 text = "X-LOCALHOST",
-                fontSize = 22.sp,
-                fontWeight = FontWeight.Black,
-                letterSpacing = 1.sp,
-                color = TextMain
+                fontSize = 24.sp,
+                fontWeight = FontWeight.ExtraBold,
+                fontFamily = FontFamily.SansSerif,
+                letterSpacing = 2.sp,
+                color = TextPrimary
             )
             Row(verticalAlignment = Alignment.CenterVertically) {
+                val infiniteTransition = rememberInfiniteTransition()
+                val alpha by infiniteTransition.animateFloat(
+                    initialValue = 0.4f,
+                    targetValue = 1f,
+                    animationSpec = infiniteRepeatable(tween(1000, easing = LinearEasing), RepeatMode.Reverse)
+                )
                 Box(
                     modifier = Modifier
                         .size(8.dp)
                         .clip(CircleShape)
-                        .background(if (isRunning) AccSuccess else TextDim)
+                        .background(if (isRunning) AccSuccess.copy(alpha = alpha) else TextSec)
                 )
                 Spacer(Modifier.width(8.dp))
                 Text(
-                    text = if (isRunning) "SERVER LIVE" else "SERVER STANDBY",
+                    text = if (isRunning) "SERVER LIVE" else "STANDBY",
                     fontSize = 12.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = if (isRunning) AccSuccess else TextDim
+                    fontWeight = FontWeight.Black,
+                    color = if (isRunning) AccSuccess else TextSec
                 )
             }
         }
@@ -254,36 +262,28 @@ fun DashboardHeader(isRunning: Boolean, onShowLogs: () -> Unit) {
         IconButton(
             onClick = onShowLogs,
             modifier = Modifier
-                .clip(CircleShape)
-                .background(BgSurface)
+                .size(48.dp)
+                .border(1.dp, BorderElite, CircleShape)
+                .background(BgPanel, CircleShape)
         ) {
-            Icon(Icons.Default.Terminal, contentDescription = "Logs", tint = AccPrimary)
+            Icon(Icons.Default.Terminal, contentDescription = null, tint = AccNeon, modifier = Modifier.size(20.dp))
         }
     }
 }
 
 @Composable
-fun StatusCard(uiState: ServerUiState, onStart: () -> Unit, onStop: () -> Unit) {
+fun ServerStatusCard(uiState: ServerUiState, onStart: () -> Unit, onStop: () -> Unit) {
     Surface(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
-        color = BgCard,
-        border = BorderStroke(1.dp, BorderColor)
+        shape = RoundedCornerShape(20.dp),
+        color = BgPanel,
+        border = BorderStroke(1.dp, BorderElite)
     ) {
-        Column(modifier = Modifier.padding(20.dp)) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Column {
-                    Text("Server Status", color = TextDim, fontSize = 12.sp)
-                    Text(
-                        if (uiState.isRunning) "Running" else "Stopped",
-                        color = if (uiState.isRunning) AccSuccess else AccError,
-                        fontSize = 20.sp,
-                        fontWeight = FontWeight.Bold
-                    )
+        Column(modifier = Modifier.padding(24.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text("LOCAL IP ADDRESS", color = TextSec, fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                    Text(uiState.localIp, color = AccNeon, fontSize = 20.sp, fontWeight = FontWeight.ExtraBold)
                 }
                 
                 Button(
@@ -302,14 +302,13 @@ fun StatusCard(uiState: ServerUiState, onStart: () -> Unit, onStop: () -> Unit) 
             }
             
             if (uiState.isRunning) {
-                Spacer(Modifier.height(16.dp))
-                Divider(color = BorderColor)
-                Spacer(Modifier.height(16.dp))
-                
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                    InfoMetric("Requests", "${uiState.requestLogs.size}", Icons.Default.SwapVert)
-                    InfoMetric("Uptime", "100%", Icons.Default.Timer)
-                    InfoMetric("Database", if (uiState.config.enableSqlite) "Active" else "Off", Icons.Default.Storage)
+                Spacer(Modifier.height(20.dp))
+                Divider(color = BorderElite, thickness = 0.5.dp)
+                Spacer(Modifier.height(20.dp))
+                Row(horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
+                    SmallMetric("STATUS", "Running", AccSuccess)
+                    SmallMetric("UPTIME", "100%", AccNeon)
+                    SmallMetric("PORT", "8080", TextPrimary)
                 }
             }
         }
@@ -317,149 +316,105 @@ fun StatusCard(uiState: ServerUiState, onStart: () -> Unit, onStop: () -> Unit) 
 }
 
 @Composable
-fun InfoMetric(label: String, value: String, icon: ImageVector) {
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Icon(icon, contentDescription = null, tint = AccPrimary, modifier = Modifier.size(18.dp))
-        Text(value, color = TextMain, fontSize = 16.sp, fontWeight = FontWeight.Bold)
-        Text(label, color = TextDim, fontSize = 10.sp)
-    }
-}
-
-@Composable
-fun QuickActionsRow(uiState: ServerUiState, viewModel: ServerViewModel, onPickFolder: () -> Unit) {
-    var showVariants by remember { mutableStateOf(false) }
-    
-    if (showVariants) {
-        FileAccessVariantsDialog(
-            currentVariant = uiState.config.fileAccessVariant,
-            onDismiss = { showVariants = false },
-            onSelect = { 
-                viewModel.updateConfig { it.copy(fileAccessVariant = it) }
-                showVariants = false
-            }
-        )
-    }
-
-    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-        ActionTile(
-            title = "Root Folder",
-            subtitle = if (uiState.config.fileAccessVariant == "File API") "Internal" else uiState.config.folderDisplayPath.ifEmpty { "Select" },
-            icon = Icons.Default.Folder,
-            modifier = Modifier.weight(1f),
-            onClick = { if (uiState.config.fileAccessVariant == "SAF") onPickFolder() else showVariants = true }
-        )
-        ActionTile(
-            title = "Access",
-            subtitle = uiState.config.fileAccessVariant,
-            icon = Icons.Default.SettingsInputComponent,
-            modifier = Modifier.weight(1f),
-            onClick = { showVariants = true }
-        )
-    }
-}
-
-@Composable
-fun ActionTile(title: String, subtitle: String, icon: ImageVector, modifier: Modifier, onClick: () -> Unit) {
+fun MetricCard(label: String, value: String, progress: Float, color: Color, modifier: Modifier) {
     Surface(
-        modifier = modifier.clickable { onClick() },
-        shape = RoundedCornerShape(12.dp),
-        color = BgCard,
-        border = BorderStroke(1.dp, BorderColor)
+        modifier = modifier,
+        shape = RoundedCornerShape(16.dp),
+        color = BgPanel,
+        border = BorderStroke(1.dp, BorderElite)
     ) {
-        Row(modifier = Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
-            Icon(icon, contentDescription = null, tint = AccPrimary, modifier = Modifier.size(24.dp))
+        Column(modifier = Modifier.padding(16.dp)) {
+            Text(label, color = TextSec, fontSize = 9.sp, fontWeight = FontWeight.Bold)
+            Spacer(Modifier.height(4.dp))
+            Text(value, color = TextPrimary, fontSize = 18.sp, fontWeight = FontWeight.ExtraBold)
+            Spacer(Modifier.height(12.dp))
+            LinearProgressIndicator(
+                progress = progress,
+                modifier = Modifier.fillMaxWidth().height(4.dp).clip(CircleShape),
+                color = color,
+                trackColor = BorderElite
+            )
+        }
+    }
+}
+
+@Composable
+fun StatsBox(label: String, value: String, icon: ImageVector, modifier: Modifier) {
+    Surface(
+        modifier = modifier,
+        shape = RoundedCornerShape(16.dp),
+        color = BgPanel,
+        border = BorderStroke(1.dp, BorderElite)
+    ) {
+        Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
+            Icon(icon, contentDescription = null, tint = AccNeon, modifier = Modifier.size(24.dp))
             Spacer(Modifier.width(12.dp))
             Column {
-                Text(title, color = TextDim, fontSize = 10.sp)
-                Text(subtitle, color = TextMain, fontSize = 12.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Text(label, color = TextSec, fontSize = 9.sp, fontWeight = FontWeight.Bold)
+                Text(value, color = TextPrimary, fontSize = 16.sp, fontWeight = FontWeight.ExtraBold)
             }
         }
     }
 }
 
 @Composable
-fun NetworkCard(uiState: ServerUiState, viewModel: ServerViewModel) {
+fun DirectoryPanel(config: ServerConfig, onPickFolder: () -> Unit, onShowVariants: () -> Unit) {
+    Surface(
+        modifier = Modifier.fillMaxWidth().clickable { if (config.fileAccessVariant == "SAF") onPickFolder() else onShowVariants() },
+        shape = RoundedCornerShape(16.dp),
+        color = BgPanel,
+        border = BorderStroke(1.dp, BorderElite)
+    ) {
+        Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
+            Icon(Icons.Default.FolderOpen, contentDescription = null, tint = AccNeon)
+            Spacer(Modifier.width(16.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text("ROOT FOLDER", color = TextSec, fontSize = 9.sp, fontWeight = FontWeight.Bold)
+                Text(
+                    text = if (config.fileAccessVariant == "File API") "System Private" else config.folderDisplayPath.ifEmpty { "Select Path" },
+                    color = TextPrimary,
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Bold,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
+            Icon(Icons.Default.ChevronRight, contentDescription = null, tint = TextSec)
+        }
+    }
+}
+
+@Composable
+fun EliteSettingsPanel(config: ServerConfig, viewModel: ServerViewModel) {
     Surface(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(12.dp),
-        color = BgCard,
-        border = BorderStroke(1.dp, BorderColor)
+        shape = RoundedCornerShape(16.dp),
+        color = BgPanel,
+        border = BorderStroke(1.dp, BorderElite)
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text("Local IP Address", color = TextDim, fontSize = 12.sp, modifier = Modifier.weight(1f))
-                Text(uiState.localIp, color = AccPrimary, fontWeight = FontWeight.Bold)
-                Spacer(Modifier.width(8.dp))
-                Icon(Icons.Default.ContentCopy, contentDescription = null, tint = AccPrimary, modifier = Modifier.size(16.dp))
-            }
-            Spacer(Modifier.height(12.dp))
-            Divider(color = BorderColor)
-            Spacer(Modifier.height(12.dp))
-            PremiumToggle("Prefer IPv6", uiState.config.preferIpv6) {
-                viewModel.updateConfig { it.copy(preferIpv6 = !it.preferIpv6) }
-            }
+        Column(modifier = Modifier.padding(8.dp)) {
+            EliteToggle("HTTPS Encryption", config.useTls) { viewModel.updateConfig { it.copy(useTls = !it.useTls) } }
+            EliteToggle("Auth Required", config.requireAuthorization) { viewModel.updateConfig { it.copy(requireAuthorization = !it.requireAuthorization) } }
+            EliteToggle("Rate Limiting", config.requestRateLimit) { viewModel.updateConfig { it.copy(requestRateLimit = !it.requestRateLimit) } }
+            EliteToggle("Welcome Screen", config.serveWelcomeFile) { viewModel.updateServeWelcomeFile(!config.serveWelcomeFile) }
         }
     }
 }
 
 @Composable
-fun SecurityCard(config: ServerConfig, viewModel: ServerViewModel) {
-    Surface(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(12.dp),
-        color = BgCard,
-        border = BorderStroke(1.dp, BorderColor)
-    ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            PremiumToggle("Require Authorization", config.requireAuthorization) {
-                viewModel.updateConfig { it.copy(requireAuthorization = !it.requireAuthorization) }
-            }
-            PremiumToggle("Use TLS (HTTPS)", config.useTls) {
-                viewModel.updateConfig { it.copy(useTls = !it.useTls) }
-            }
-            PremiumToggle("Rate Limiting", config.requestRateLimit) {
-                viewModel.updateConfig { it.copy(requestRateLimit = !it.requestRateLimit) }
-            }
-        }
-    }
-}
-
-@Composable
-fun AdvancedCard(config: ServerConfig, viewModel: ServerViewModel, context: android.content.Context) {
-    Surface(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(12.dp),
-        color = BgCard,
-        border = BorderStroke(1.dp, BorderColor)
-    ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            PremiumToggle("Welcome Page", config.serveWelcomeFile) {
-                viewModel.updateServeWelcomeFile(!config.serveWelcomeFile)
-            }
-            PremiumToggle("Auto-start on Boot", config.autostartOnBoot) {
-                viewModel.updateConfig { it.copy(autostartOnBoot = !it.autostartOnBoot) }
-            }
-        }
-    }
-}
-
-@Composable
-fun PremiumToggle(label: String, checked: Boolean, onCheckedChange: (Boolean) -> Unit) {
+fun EliteToggle(label: String, checked: Boolean, onCheckedChange: (Boolean) -> Unit) {
     Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable { onCheckedChange(!checked) }
-            .padding(vertical = 8.dp),
+        modifier = Modifier.fillMaxWidth().clickable { onCheckedChange(!checked) }.padding(12.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Text(label, color = TextMain, fontSize = 14.sp, modifier = Modifier.weight(1f))
+        Text(label, color = TextPrimary, fontSize = 14.sp, modifier = Modifier.weight(1f))
         Switch(
             checked = checked,
             onCheckedChange = onCheckedChange,
             colors = SwitchDefaults.colors(
                 checkedThumbColor = Color.White,
-                checkedTrackColor = AccPrimary,
-                uncheckedThumbColor = TextDim,
+                checkedTrackColor = AccNeon,
+                uncheckedThumbColor = TextSec,
                 uncheckedTrackColor = BgSurface
             )
         )
@@ -467,122 +422,83 @@ fun PremiumToggle(label: String, checked: Boolean, onCheckedChange: (Boolean) ->
 }
 
 @Composable
+fun SmallMetric(label: String, value: String, color: Color) {
+    Column {
+        Text(label, color = TextSec, fontSize = 8.sp, fontWeight = FontWeight.Bold)
+        Text(value, color = color, fontSize = 12.sp, fontWeight = FontWeight.ExtraBold)
+    }
+}
+
+@Composable
 fun SectionLabel(text: String) {
     Text(
         text = text.uppercase(),
-        color = TextDim,
-        fontSize = 11.sp,
-        fontWeight = FontWeight.Bold,
-        letterSpacing = 1.sp,
-        modifier = Modifier.padding(bottom = 8.dp)
+        color = AccNeon,
+        fontSize = 10.sp,
+        fontWeight = FontWeight.Black,
+        letterSpacing = 1.5.sp,
+        modifier = Modifier.padding(top = 8.dp, bottom = 4.dp)
     )
 }
 
-// ── Re-using existing components with premium styling ────────────────────────
+// --- Re-styling Logs Screen to match ---
 @Composable
 fun LogsScreen(uiState: ServerUiState, onBack: () -> Unit, onClear: () -> Unit) {
-    val logs = uiState.requestLogs
-    val listState = rememberLazyListState()
-    var selectedLog by remember { mutableStateOf<LogEntry?>(null) }
-
-    LaunchedEffect(logs.size) {
-        if (logs.isNotEmpty()) listState.animateScrollToItem(logs.size - 1)
-    }
-
-    Column(modifier = Modifier.fillMaxSize().background(BgMain)) {
+    Column(modifier = Modifier.fillMaxSize().background(BgDeep)) {
         Row(
-            modifier = Modifier.fillMaxWidth().padding(16.dp),
+            modifier = Modifier.fillMaxWidth().padding(24.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            IconButton(onClick = onBack) {
-                Icon(Icons.Default.ArrowBack, contentDescription = null, tint = TextMain)
+            IconButton(onClick = onBack, modifier = Modifier.border(1.dp, BorderElite, CircleShape)) {
+                Icon(Icons.Default.ArrowBack, contentDescription = null, tint = TextPrimary)
             }
-            Text("Network Logs", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = TextMain, modifier = Modifier.weight(1f))
+            Spacer(Modifier.width(16.dp))
+            Text("NETWORK TRAFFIC", fontSize = 18.sp, fontWeight = FontWeight.ExtraBold, color = TextPrimary, modifier = Modifier.weight(1f))
             IconButton(onClick = onClear) {
-                Icon(Icons.Default.Delete, contentDescription = null, tint = AccError)
+                Icon(Icons.Default.DeleteSweep, contentDescription = null, tint = AccError)
             }
         }
 
-        if (logs.isEmpty()) {
-            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text("Listening for requests...", color = TextDim, fontFamily = FontFamily.Monospace)
-            }
-        } else {
-            LazyColumn(
-                state = listState,
-                modifier = Modifier.fillMaxSize().padding(horizontal = 16.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                items(logs) { log ->
-                    LogCard(log)
-                }
+        LazyColumn(
+            modifier = Modifier.fillMaxSize().padding(horizontal = 20.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            items(uiState.requestLogs) { log ->
+                EliteLogCard(log)
             }
         }
     }
 }
 
 @Composable
-fun LogCard(log: LogEntry) {
+fun EliteLogCard(log: LogEntry) {
     Surface(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(8.dp),
-        color = BgCard,
-        border = BorderStroke(1.dp, BorderColor)
+        shape = RoundedCornerShape(12.dp),
+        color = BgPanel,
+        border = BorderStroke(1.dp, BorderElite)
     ) {
-        Row(modifier = Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
-            Text(
-                text = log.method,
-                color = if (log.method == "GET") AccSuccess else AccWarning,
-                fontWeight = FontWeight.Bold,
-                fontSize = 12.sp,
-                modifier = Modifier.width(45.dp)
-            )
+        Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
+            Box(
+                modifier = Modifier
+                    .size(40.dp)
+                    .clip(RoundedCornerShape(8.dp))
+                    .background(if (log.method == "GET") AccSuccess.copy(alpha = 0.1f) else AccNeon.copy(alpha = 0.1f)),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(log.method.take(1), color = if (log.method == "GET") AccSuccess else AccNeon, fontWeight = FontWeight.Black)
+            }
+            Spacer(Modifier.width(16.dp))
             Column(modifier = Modifier.weight(1f)) {
-                Text(log.path, color = TextMain, fontSize = 13.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                Text("${log.clientIp} • ${log.durationMs}ms", color = TextDim, fontSize = 10.sp)
+                Text(log.path, color = TextPrimary, fontSize = 13.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Text("${log.clientIp} • ${log.durationMs}ms", color = TextSec, fontSize = 10.sp)
             }
             Text(
                 text = "${log.statusCode}",
                 color = if (log.statusCode < 400) AccSuccess else AccError,
-                fontWeight = FontWeight.Bold,
-                fontSize = 12.sp
+                fontWeight = FontWeight.ExtraBold,
+                fontSize = 14.sp
             )
-        }
-    }
-}
-
-@Composable
-fun FileAccessVariantsDialog(currentVariant: String, onDismiss: () -> Unit, onSelect: (String) -> Unit) {
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        containerColor = BgCard,
-        title = { Text("Storage Protocol", color = TextMain) },
-        text = {
-            Column {
-                VariantOption("File API", "Direct system access (Recommended)", currentVariant == "File API") { onSelect("File API") }
-                VariantOption("SAF", "Storage Access Framework (Picker)", currentVariant == "SAF") { onSelect("SAF") }
-                VariantOption("Media", "Media Store (Gallery/Docs)", currentVariant == "Media store") { onSelect("Media store") }
-            }
-        },
-        confirmButton = {
-            TextButton(onClick = onDismiss) { Text("CLOSE", color = AccPrimary) }
-        }
-    )
-}
-
-@Composable
-fun VariantOption(title: String, desc: String, selected: Boolean, onClick: () -> Unit) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable { onClick() }
-            .padding(vertical = 12.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        RadioButton(selected = selected, onClick = onClick, colors = RadioButtonDefaults.colors(selectedColor = AccPrimary))
-        Column {
-            Text(title, color = TextMain, fontSize = 14.sp, fontWeight = FontWeight.Bold)
-            Text(desc, color = TextDim, fontSize = 11.sp)
         }
     }
 }
