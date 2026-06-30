@@ -1,26 +1,28 @@
-# Aviso de Uso Libre para X-LOCALHOST
+# Declaración de Uso y Responsabilidad de X-LOCALHOST
 
-¡Hola a todos los usuarios de X-LOCALHOST!
+**Flinger Apps Corporation** se complace en presentar **X-LOCALHOST**, una solución de software diseñada para facilitar el desarrollo y la prueba de aplicaciones web y móviles. Nuestro compromiso es con la innovación y la provisión de herramientas robustas para la comunidad de desarrolladores.
 
-Este proyecto ha sido creado con la intención de ser una herramienta versátil y accesible para la comunidad. Por ello, lo ponemos a vuestra disposición bajo un modelo de **uso libre**.
+## Principios de Uso
 
-Esto significa que tenéis la libertad de:
+Este software se distribuye bajo la **Licencia MIT**, lo que confiere a nuestros usuarios la libertad de:
 
-*   **Utilizarlo** para vuestros proyectos personales o profesionales.
-*   **Modificarlo** para adaptarlo a vuestras necesidades específicas.
-*   **Distribuirlo** a otros, siempre y cuando se mantengan las condiciones de esta licencia.
+*   **Utilizar** el software para cualquier propósito, comercial o no comercial.
+*   **Modificar** el código fuente para adaptarlo a sus requisitos específicos.
+*   **Distribuir** copias del software modificado o sin modificar.
 
-Lo único que os pedimos a cambio es un simple gesto de reconocimiento: por favor, **dadnos crédito** si utilizáis o modificáis este trabajo. Un pequeño agradecimiento o una mención a los creadores nos ayuda a seguir desarrollando y mejorando.
+En virtud de la naturaleza de código abierto de X-LOCALHOST, solicitamos respetuosamente que se mantenga el **reconocimiento apropiado** a Flinger Apps Corporation en cualquier derivación o distribución del software. Este crédito es fundamental para el sostenimiento de nuestra labor de desarrollo y la continuidad de proyectos futuros.
 
-## Advertencia Importante: Vuestra Responsabilidad
+## Exención de Responsabilidad y Limitación de Garantía
 
-Queremos ser muy claros en este punto: **X-LOCALHOST es una herramienta neutral**. Como cualquier otra herramienta, su uso puede ser beneficioso o perjudicial, dependiendo de la intención del usuario.
+**Flinger Apps Corporation** desarrolla X-LOCALHOST como una herramienta de propósito general. Es imperativo que los usuarios comprendan que la funcionalidad del software, por su diseño, puede ser empleada en una variedad de contextos.
 
-**No nos hacemos responsables** bajo ninguna circunstancia del uso que se le dé a este software con fines maliciosos, ilegales o perjudiciales. Esto incluye, pero no se limita a, la inyección de virus, la realización de ataques cibernéticos, la distribución de contenido dañino o cualquier otra actividad que infrinja leyes o cause daño a terceros.
+**ADVERTENCIA:** El uso de X-LOCALHOST para fines ilícitos, maliciosos o no autorizados, incluyendo, pero no limitado a, la inyección de software malicioso, la realización de ataques de denegación de servicio, la explotación de vulnerabilidades de seguridad o cualquier actividad que contravenga las leyes y regulaciones aplicables, **es estrictamente responsabilidad del usuario final**.
 
-**La responsabilidad exclusiva y total de las acciones derivadas del uso de X-LOCALHOST recae únicamente en el usuario.** Al utilizar este software, aceptáis plenamente esta condición y entendéis que cualquier consecuencia negativa es vuestra incumbencia.
+**FLINGER APPS CORPORATION NO ASUME NINGUNA RESPONSABILIDAD, DIRECTA O INDIRECTA, POR CUALQUIER DAÑO, PÉRDIDA O CONSECUENCIA ADVERSA QUE PUDIERA DERIVARSE DEL USO INDEBIDO, NEGLIGENTE O MALINTENCIONADO DE X-LOCALHOST.** La decisión de utilizar este software y las acciones resultantes son enteramente del usuario, quien debe asegurar el cumplimiento de todas las normativas legales y éticas pertinentes.
 
-Gracias por vuestra comprensión y por formar parte de la comunidad X-LOCALHOST.
+Al descargar, instalar o utilizar X-LOCALHOST, el usuario reconoce y acepta plenamente esta exención de responsabilidad y se compromete a utilizar el software de manera ética y legal.
 
 Atentamente,
-El equipo de Flinger Apps
+
+--flinger apps
+Flinger Apps Corporation
