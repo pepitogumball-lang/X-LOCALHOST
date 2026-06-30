@@ -104,6 +104,7 @@ class ServerViewModel(application: Application) : AndroidViewModel(application) 
 
     fun startServer(context: android.content.Context) {
         val config = _uiState.value.config
+        // Allow starting without a selected folder ONLY if File API is used (uses internal storage)
         if (config.folderUri == null && config.fileAccessVariant != "File API") {
             addLog("Error: select a folder first.")
             return

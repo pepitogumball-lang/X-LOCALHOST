@@ -241,14 +241,10 @@ fun MainScreen(
                     color      = ColText
                 )
                 Spacer(Modifier.width(8.dp))
-                val statusColor by animateColorAsState(
-                    targetValue = if (uiState.isRunning) ColActive else ColInact,
-                    animationSpec = tween(500)
-                )
                 Box(
                     modifier = Modifier
                         .size(8.dp)
-                        .background(statusColor, RoundedCornerShape(4.dp))
+                        .background(if (uiState.isRunning) ColActive else ColInact, RoundedCornerShape(4.dp))
                 )
             }
             IconButton(onClick = onShowLogs) {
@@ -259,20 +255,19 @@ fun MainScreen(
 
         item { SectionHeader("General") }
         item {
-            AnimatedVisibility(visible = uiState.isRunning) {
+            if (uiState.isRunning) {
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
                         .background(ColActive.copy(alpha = 0.1f))
-                        .padding(vertical = 8.dp),
+                        .padding(vertical = 4.dp),
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        text = "SERVER IS LIVE",
+                        text = "● LIVE",
                         color = ColActive,
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.Bold,
-                        letterSpacing = 2.sp
+                        fontSize = 10.sp,
+                        fontWeight = FontWeight.Bold
                     )
                 }
             }
@@ -484,14 +479,10 @@ fun GeneralSection(
 
         Spacer(Modifier.height(16.dp))
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            val buttonColor by animateColorAsState(
-                targetValue = if (uiState.isRunning) Color(0xFFB71C1C) else Color(0xFF2E7D32),
-                animationSpec = tween(300)
-            )
             Button(
                 onClick = if (uiState.isRunning) onStop else onStart,
                 modifier = Modifier.weight(1.5f),
-                colors = ButtonDefaults.buttonColors(containerColor = buttonColor),
+                colors = ButtonDefaults.buttonColors(containerColor = if (uiState.isRunning) Color(0xFFB71C1C) else Color(0xFF2E7D32)),
                 shape = RoundedCornerShape(4.dp)
             ) {
                 Icon(
@@ -506,9 +497,8 @@ fun GeneralSection(
             Button(
                 onClick = onShowLogs,
                 modifier = Modifier.weight(1f),
-                colors = ButtonDefaults.buttonColors(containerColor = if (uiState.requestLogs.isNotEmpty()) ColLink.copy(alpha = 0.2f) else BgBtn),
-                shape = RoundedCornerShape(4.dp),
-                border = if (uiState.requestLogs.isNotEmpty()) BorderStroke(1.dp, ColLink) else null
+                colors = ButtonDefaults.buttonColors(containerColor = if (uiState.requestLogs.isNotEmpty()) ColLink.copy(alpha = 0.1f) else BgBtn),
+                shape = RoundedCornerShape(4.dp)
             ) {
                 Text("LOGS", color = if (uiState.requestLogs.isNotEmpty()) ColLink else ColText, fontWeight = FontWeight.Bold)
             }
@@ -596,7 +586,10 @@ fun FilesSection(
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp)
                 .background(BgCard, RoundedCornerShape(4.dp))
-                .clickable(enabled = !isRunning) { showVariantsDialog = true }
+                .clickable(enabled = !isRunning) { 
+                    if (config.fileAccessVariant == "SAF") onPickFolder() 
+                    else showVariantsDialog = true 
+                }
                 .padding(8.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -733,7 +726,7 @@ fun LogsScreen(
     var selectedLog by remember { mutableStateOf<LogEntry?>(null) }
 
     LaunchedEffect(logs.size) {
-        if (logs.isNotEmpty()) listState.animateScrollToItem(logs.size - 1)
+        if (logs.isNotEmpty()) listState.scrollToItem(logs.size - 1)
     }
 
     Column(modifier = Modifier.fillMaxSize().background(BgMain)) {
