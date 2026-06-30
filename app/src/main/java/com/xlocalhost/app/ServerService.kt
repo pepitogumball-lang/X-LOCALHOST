@@ -19,6 +19,9 @@ class ServerService : Service() {
     private var wakeLock: PowerManager.WakeLock? = null
 
     companion object {
+        var isRunning = false
+            private set
+
         const val ACTION_START       = "com.flinger.localserver.ACTION_START"
         const val ACTION_STOP        = "com.flinger.localserver.ACTION_STOP"
         const val EXTRA_FOLDER_URI   = "extra_folder_uri"
@@ -57,21 +60,27 @@ class ServerService : Service() {
                 val corsOrigin  = intent.getStringExtra(EXTRA_CORS_ORIGIN)
                 val corsMethods = intent.getStringExtra(EXTRA_CORS_METHODS)
                 val corsHeaders = intent.getStringExtra(EXTRA_CORS_HEADERS)
-                if (uriString == null) {
-                    Log.e(TAG, "No folder URI received.")
+                val folderUri = if (uriString != null) Uri.parse(uriString) else {
+                    // Default to internal files dir if no URI provided (File API variant)
+                    Uri.fromFile(applicationContext.filesDir)
+                }
+                
+                if (folderUri == null) {
+                    Log.e(TAG, "Could not resolve folder URI.")
                     stopSelf()
                     return START_NOT_STICKY
                 }
-                val folderUri = Uri.parse(uriString)
                 acquireWakeLock()
                 startForeground(NOTIFICATION_ID, buildNotification(port))
                 val cors = if (corsOrigin != null) LocalWebServer.CorsConfig(corsOrigin, corsMethods ?: "*", corsHeaders ?: "*") else null
                 startWebServer(folderUri, port, allowMod, enableSqlite, dbModify, dbCustomSql, cors, serveWelcomeFile)
+                isRunning = true
             }
             ACTION_STOP -> {
                 stopWebServer()
                 releaseWakeLock()
                 stopForeground(STOP_FOREGROUND_REMOVE)
+                isRunning = false
                 stopSelf()
             }
         }
@@ -126,6 +135,7 @@ class ServerService : Service() {
             Log.i(TAG, "Server started on port $port")
         } catch (e: Exception) {
             Log.e(TAG, "Error starting server: ${e.message}", e)
+            isRunning = false
             stopSelf()
         }
     }

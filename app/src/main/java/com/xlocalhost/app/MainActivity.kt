@@ -29,6 +29,10 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -221,13 +225,14 @@ fun MainScreen(
             .background(BgMain)
     ) {
         item {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 12.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 12.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
                     text       = "x-localhost",
                     fontSize   = 26.sp,
@@ -235,14 +240,42 @@ fun MainScreen(
                     fontFamily = FontFamily.Monospace,
                     color      = ColText
                 )
-                IconButton(onClick = onShowLogs) {
-                    Icon(Icons.Default.Terminal, contentDescription = "Logs", tint = ColDim)
-                }
+                Spacer(Modifier.width(8.dp))
+                val statusColor by animateColorAsState(
+                    targetValue = if (uiState.isRunning) ColActive else ColInact,
+                    animationSpec = tween(500)
+                )
+                Box(
+                    modifier = Modifier
+                        .size(8.dp)
+                        .background(statusColor, RoundedCornerShape(4.dp))
+                )
             }
+            IconButton(onClick = onShowLogs) {
+                Icon(Icons.Default.Terminal, contentDescription = "Logs", tint = ColDim)
+            }
+        }
         }
 
         item { SectionHeader("General") }
         item {
+            AnimatedVisibility(visible = uiState.isRunning) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(ColActive.copy(alpha = 0.1f))
+                        .padding(vertical = 8.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "SERVER IS LIVE",
+                        color = ColActive,
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Bold,
+                        letterSpacing = 2.sp
+                    )
+                }
+            }
             GeneralSection(
                 uiState    = uiState,
                 viewModel  = viewModel,
@@ -451,21 +484,33 @@ fun GeneralSection(
 
         Spacer(Modifier.height(16.dp))
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            val buttonColor by animateColorAsState(
+                targetValue = if (uiState.isRunning) Color(0xFFB71C1C) else Color(0xFF2E7D32),
+                animationSpec = tween(300)
+            )
             Button(
                 onClick = if (uiState.isRunning) onStop else onStart,
-                modifier = Modifier.weight(1f),
-                colors = ButtonDefaults.buttonColors(containerColor = if (uiState.isRunning) Color(0xFF444444) else BgBtn),
+                modifier = Modifier.weight(1.5f),
+                colors = ButtonDefaults.buttonColors(containerColor = buttonColor),
                 shape = RoundedCornerShape(4.dp)
             ) {
-                Text(if (uiState.isRunning) "STOP" else "START", color = ColText)
+                Icon(
+                    imageVector = if (uiState.isRunning) Icons.Default.Stop else Icons.Default.PlayArrow,
+                    contentDescription = null,
+                    tint = Color.White,
+                    modifier = Modifier.size(18.dp)
+                )
+                Spacer(Modifier.width(8.dp))
+                Text(if (uiState.isRunning) "STOP" else "START", color = Color.White, fontWeight = FontWeight.Bold)
             }
             Button(
                 onClick = onShowLogs,
                 modifier = Modifier.weight(1f),
-                colors = ButtonDefaults.buttonColors(containerColor = BgBtn),
-                shape = RoundedCornerShape(4.dp)
+                colors = ButtonDefaults.buttonColors(containerColor = if (uiState.requestLogs.isNotEmpty()) ColLink.copy(alpha = 0.2f) else BgBtn),
+                shape = RoundedCornerShape(4.dp),
+                border = if (uiState.requestLogs.isNotEmpty()) BorderStroke(1.dp, ColLink) else null
             ) {
-                Text("LOGS", color = ColText)
+                Text("LOGS", color = if (uiState.requestLogs.isNotEmpty()) ColLink else ColText, fontWeight = FontWeight.Bold)
             }
         }
         Spacer(Modifier.height(12.dp))

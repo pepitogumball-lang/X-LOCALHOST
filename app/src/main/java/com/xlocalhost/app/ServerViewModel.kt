@@ -104,7 +104,7 @@ class ServerViewModel(application: Application) : AndroidViewModel(application) 
 
     fun startServer(context: android.content.Context) {
         val config = _uiState.value.config
-        if (config.folderUri == null) {
+        if (config.folderUri == null && config.fileAccessVariant != "File API") {
             addLog("Error: select a folder first.")
             return
         }
@@ -137,6 +137,8 @@ class ServerViewModel(application: Application) : AndroidViewModel(application) 
         } else {
             context.startService(intent)
         }
+        // Instead of immediate update, we'll sync with service state in a loop or similar
+        // For simplicity, let's update it but we should ideally have a more robust sync
         _uiState.update { it.copy(isRunning = true) }
         addLog("Server started → ${_uiState.value.serverUrl}")
     }
@@ -164,6 +166,11 @@ class ServerViewModel(application: Application) : AndroidViewModel(application) 
     }
 
     fun refreshNetworkInfo() {
+        // Sync running state with service
+        if (_uiState.value.isRunning != ServerService.isRunning) {
+            _uiState.update { it.copy(isRunning = ServerService.isRunning) }
+        }
+
         val interfaces = mutableListOf<String>()
         var ipv4 = "0.0.0.0"
         var ipv6 = ""
