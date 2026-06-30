@@ -20,6 +20,7 @@ data class ServerConfig(
     val port: Int = 8080,
     val folderUri: Uri? = null,
     val folderDisplayPath: String = "",
+    val fileAccessVariant: String = "File API", // "File API", "SAF", "Media store"
     val preferIpv6: Boolean = false,
     val renderFolderPages: Boolean = true,
     val allowModification: Boolean = false,
@@ -35,6 +36,12 @@ data class ServerConfig(
     val customResponseHeaders: Boolean = false,
     val customCharset: Boolean = false,
     val configureCors: Boolean = false,
+    val corsAllowOrigin: String = "*",
+    val corsAllowMethods: String = "GET,POST,PUT,DELETE,OPTIONS",
+    val corsAllowHeaders: String = "Content-Type,Authorization",
+    val enableSqlite: Boolean = false,
+    val enableDbModifyApi: Boolean = false,
+    val enableDbCustomSqlApi: Boolean = false,
 )
 
 data class ServerUiState(
@@ -45,6 +52,10 @@ data class ServerUiState(
     val availableInterfaces: List<String> = emptyList(),
     val selectedInterface: String = "wlan0",
     val logs: List<String> = emptyList(),
+    val requestLogs: List<LogEntry> = emptyList(),
+    val dbStatus: String = "Disconnected",
+    val dbSize: String = "0.0 KB",
+    val dbTables: Int = 0,
 ) {
     val displayedIp: String get() = if (config.preferIpv6 && localIpV6.isNotEmpty()) localIpV6 else localIpV4
     val serverUrl: String get() {
@@ -105,6 +116,14 @@ class ServerViewModel(application: Application) : AndroidViewModel(application) 
             putExtra(ServerService.EXTRA_FOLDER_URI, config.folderUri.toString())
             putExtra(ServerService.EXTRA_PORT, config.port)
             putExtra(ServerService.EXTRA_ALLOW_MOD, config.allowModification)
+            putExtra(ServerService.EXTRA_ENABLE_SQLITE, config.enableSqlite)
+            putExtra(ServerService.EXTRA_DB_MODIFY, config.enableDbModifyApi)
+            putExtra(ServerService.EXTRA_DB_CUSTOM_SQL, config.enableDbCustomSqlApi)
+            if (config.configureCors) {
+                putExtra(ServerService.EXTRA_CORS_ORIGIN, config.corsAllowOrigin)
+                putExtra(ServerService.EXTRA_CORS_METHODS, config.corsAllowMethods)
+                putExtra(ServerService.EXTRA_CORS_HEADERS, config.corsAllowHeaders)
+            }
         }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             context.startForegroundService(intent)
@@ -129,8 +148,12 @@ class ServerViewModel(application: Application) : AndroidViewModel(application) 
         _uiState.update { it.copy(logs = it.logs + "[$ts] $message") }
     }
 
+    fun addRequestLog(log: LogEntry) {
+        _uiState.update { it.copy(requestLogs = it.requestLogs + log) }
+    }
+
     fun clearLogs() {
-        _uiState.update { it.copy(logs = emptyList()) }
+        _uiState.update { it.copy(logs = emptyList(), requestLogs = emptyList()) }
     }
 
     fun refreshNetworkInfo() {

@@ -24,6 +24,12 @@ class ServerService : Service() {
         const val EXTRA_FOLDER_URI   = "extra_folder_uri"
         const val EXTRA_PORT         = "extra_port"
         const val EXTRA_ALLOW_MOD    = "extra_allow_mod"
+        const val EXTRA_ENABLE_SQLITE = "extra_enable_sqlite"
+        const val EXTRA_DB_MODIFY    = "extra_db_modify"
+        const val EXTRA_DB_CUSTOM_SQL = "extra_db_custom_sql"
+        const val EXTRA_CORS_ORIGIN  = "extra_cors_origin"
+        const val EXTRA_CORS_METHODS = "extra_cors_methods"
+        const val EXTRA_CORS_HEADERS = "extra_cors_headers"
         const val CHANNEL_ID         = "xlocalhost_channel"
         const val NOTIFICATION_ID    = 2001
         private const val TAG        = "ServerService"
@@ -43,6 +49,12 @@ class ServerService : Service() {
                 val uriString = intent.getStringExtra(EXTRA_FOLDER_URI)
                 val port      = intent.getIntExtra(EXTRA_PORT, 8080)
                 val allowMod  = intent.getBooleanExtra(EXTRA_ALLOW_MOD, false)
+                val enableSqlite = intent.getBooleanExtra(EXTRA_ENABLE_SQLITE, false)
+                val dbModify = intent.getBooleanExtra(EXTRA_DB_MODIFY, false)
+                val dbCustomSql = intent.getBooleanExtra(EXTRA_DB_CUSTOM_SQL, false)
+                val corsOrigin  = intent.getStringExtra(EXTRA_CORS_ORIGIN)
+                val corsMethods = intent.getStringExtra(EXTRA_CORS_METHODS)
+                val corsHeaders = intent.getStringExtra(EXTRA_CORS_HEADERS)
                 if (uriString == null) {
                     Log.e(TAG, "No folder URI received.")
                     stopSelf()
@@ -51,7 +63,8 @@ class ServerService : Service() {
                 val folderUri = Uri.parse(uriString)
                 acquireWakeLock()
                 startForeground(NOTIFICATION_ID, buildNotification(port))
-                startWebServer(folderUri, port, allowMod)
+                val cors = if (corsOrigin != null) LocalWebServer.CorsConfig(corsOrigin, corsMethods ?: "*", corsHeaders ?: "*") else null
+                startWebServer(folderUri, port, allowMod, enableSqlite, dbModify, dbCustomSql, cors)
             }
             ACTION_STOP -> {
                 stopWebServer()
@@ -69,10 +82,36 @@ class ServerService : Service() {
         super.onDestroy()
     }
 
-    private fun startWebServer(folderUri: Uri, port: Int, allowMod: Boolean = false) {
+    private fun startWebServer(
+        folderUri: Uri,
+        port: Int,
+        allowMod: Boolean = false,
+        enableSqlite: Boolean = false,
+        dbModify: Boolean = false,
+        dbCustomSql: Boolean = false,
+        cors: LocalWebServer.CorsConfig? = null
+    ) {
         try {
             webServer?.stop()
-            webServer = LocalWebServer(applicationContext, folderUri, port, allowMod)
+            webServer = LocalWebServer(applicationContext, folderUri, port, allowMod, enableSqlite, dbModify, dbCustomSql, cors).apply {
+                onRequestLog = { log ->
+                    // We need a way to communicate back to the ViewModel/Activity
+                    // For now, let's use a broadcast or a shared state if possible.
+                    // Given the current architecture, a broadcast is a simple way.
+                    val intent = Intent("com.xlocalhost.app.REQUEST_LOG").apply {
+                        putExtra("method", log.method)
+                        putExtra("path", log.path)
+                        putExtra("status", log.statusCode)
+                        putExtra("desc", log.statusDescription)
+                        putExtra("duration", log.durationMs)
+                        putExtra("ip", log.clientIp)
+                        putExtra("started", log.startedAt)
+                        putExtra("ended", log.endedAt)
+                        // Headers are maps, better to send them as JSON or serialized
+                    }
+                    sendBroadcast(intent)
+                }
+            }
             webServer?.start()
             // Persist config so BootReceiver can restart the server after reboot
             applicationContext.getSharedPreferences("xlocalhost_prefs", MODE_PRIVATE)

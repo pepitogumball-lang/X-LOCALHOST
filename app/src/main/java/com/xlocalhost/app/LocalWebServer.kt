@@ -32,6 +32,9 @@ class LocalWebServer(
     private val folderUri: Uri,
     port: Int = 8080,
     private val allowModification: Boolean = false,
+    private val allowSqlite: Boolean = false,
+    private val allowDbModify: Boolean = false,
+    private val allowCustomSql: Boolean = false,
 ) : NanoHTTPD(port) {
 
     // ── Session / captcha stores (shared across instances) ────────────────────
@@ -69,12 +72,23 @@ class LocalWebServer(
     }
 
     // ── Route dispatch ────────────────────────────────────────────────────────
+    var onRequestLog: ((LogEntry) -> Unit)? = null
+
     override fun serve(session: IHTTPSession): Response {
+        val startTime = System.currentTimeMillis()
         cleanExpired()
         val m   = session.method
         val uri = session.uri.trimEnd('/')
 
-        return when {
+        if (m == Method.OPTIONS && corsConfig != null) {
+            return newFixedLengthResponse(Status.OK, MIME_PLAINTEXT, "").apply {
+                addHeader("Access-Control-Allow-Origin", corsConfig.origin)
+                addHeader("Access-Control-Allow-Methods", corsConfig.methods)
+                addHeader("Access-Control-Allow-Headers", corsConfig.headers)
+            }
+        }
+
+        val response = when {
             // Auth
             m == Method.GET  && uri == "/api/auth/captcha"  -> authCaptcha()
             m == Method.POST && uri == "/api/auth/register" -> authRegister(session)
@@ -100,6 +114,33 @@ class LocalWebServer(
             // Static / legacy browser
             else -> serveStatic(session)
         }
+
+        val endTime = System.currentTimeMillis()
+        val duration = endTime - startTime
+        
+        if (corsConfig != null) {
+            response.addHeader("Access-Control-Allow-Origin", corsConfig.origin)
+        }
+        
+        val log = LogEntry(
+            method = m.name,
+            path = session.uri,
+            statusCode = response.status.requestStatus,
+            statusDescription = response.status.description,
+            durationMs = duration,
+            clientIp = session.remoteIpAddress ?: "unknown",
+            requestHeaders = session.headers,
+            responseHeaders = mutableMapOf<String, String>().apply {
+                // NanoHTTPD doesn't expose response headers easily after creation
+                // but we can at least log the content type if available
+                put("Content-Type", response.mimeType ?: "unknown")
+            },
+            startedAt = startTime,
+            endedAt = endTime
+        )
+        onRequestLog?.invoke(log)
+
+        return response
     }
 
     // ═══════════════════════════════════════════════════════════════════════════
@@ -541,6 +582,7 @@ class LocalWebServer(
 
     // ── schema ────────────────────────────────────────────────────────────────
     private fun dbSchema(session: IHTTPSession): Response {
+        if (!allowSqlite) return err(403, "SQLite database disabled")
         val db = openDb(session) ?: return err(400, "db parameter required or database not found")
         return try {
             val tables = JSONArray()
@@ -568,6 +610,7 @@ class LocalWebServer(
 
     // ── DB route dispatch ─────────────────────────────────────────────────────
     private fun dbRoute(session: IHTTPSession, method: Method, uri: String): Response {
+        if (!allowSqlite || !allowDbModify) return err(403, "Database modify API disabled")
         val parts = uri.removePrefix("/api/db/").split("/").filter { it.isNotEmpty() }
         return when {
             parts.size == 1 -> {
@@ -594,6 +637,7 @@ class LocalWebServer(
 
     // ── table query (with filters + pagination) ───────────────────────────────
     private fun dbTable(session: IHTTPSession, table: String): Response {
+        if (!allowSqlite) return err(403, "SQLite database disabled")
         val db = openDb(session) ?: return err(400, "db parameter required or database not found")
         return try {
             val params        = session.parameters
@@ -661,6 +705,7 @@ class LocalWebServer(
 
     // ── insert ────────────────────────────────────────────────────────────────
     private fun dbInsert(session: IHTTPSession, table: String): Response {
+        if (!allowSqlite || !allowDbModify) return err(403, "Database modify API disabled")
         val db   = openDb(session) ?: return err(400, "db parameter required or database not found")
         return try {
             val body = readJsonBody(session) ?: return err(400, "Invalid JSON body")
@@ -718,6 +763,7 @@ class LocalWebServer(
 
     // ── raw query ─────────────────────────────────────────────────────────────
     private fun dbQuery(session: IHTTPSession): Response {
+        if (!allowSqlite || !allowCustomSql) return err(403, "Custom SQL API disabled")
         val db   = openDb(session) ?: return err(400, "db parameter required or database not found")
         return try {
             val body = readJsonBody(session) ?: return err(400, "Invalid JSON body")

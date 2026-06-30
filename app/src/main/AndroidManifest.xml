@@ -45,5 +45,14 @@
             </intent-filter>
         </receiver>
 
+        <receiver
+            android:name="com.xlocalhost.app.SHTTPSControl"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="START" />
+                <action android:name="STOP" />
+            </intent-filter>
+        </receiver>
+
     </application>
 </manifest>

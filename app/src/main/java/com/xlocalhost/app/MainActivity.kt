@@ -116,10 +116,38 @@ class MainActivity : ComponentActivity() {
 
     private val viewModel: ServerViewModel by viewModels()
 
+    private val logReceiver = object : android.content.BroadcastReceiver() {
+        override fun onReceive(context: android.content.Context?, intent: android.content.Intent?) {
+            if (intent?.action == "com.xlocalhost.app.REQUEST_LOG") {
+                val log = LogEntry(
+                    method = intent.getStringExtra("method") ?: "",
+                    path = intent.getStringExtra("path") ?: "",
+                    statusCode = intent.getIntExtra("status", 200),
+                    statusDescription = intent.getStringExtra("desc") ?: "",
+                    durationMs = intent.getLongExtra("duration", 0),
+                    clientIp = intent.getStringExtra("ip") ?: "",
+                    requestHeaders = emptyMap(),
+                    responseHeaders = emptyMap(),
+                    startedAt = intent.getLongExtra("started", 0),
+                    endedAt = intent.getLongExtra("ended", 0)
+                )
+                viewModel.addRequestLog(log)
+            }
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         requestNotificationPermission()
+
+        val filter = android.content.IntentFilter("com.xlocalhost.app.REQUEST_LOG")
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            registerReceiver(logReceiver, filter, android.content.Context.RECEIVER_NOT_EXPORTED)
+        } else {
+            registerReceiver(logReceiver, filter)
+        }
+
         setContent {
             MaterialTheme(colorScheme = AppColorScheme) {
                 Surface(modifier = Modifier.fillMaxSize(), color = BgMain) {
@@ -127,6 +155,11 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
+    }
+
+    override fun onDestroy() {
+        unregisterReceiver(logReceiver)
+        super.onDestroy()
     }
 
     private fun requestNotificationPermission() {
@@ -148,7 +181,7 @@ fun XLocalHostApp(viewModel: ServerViewModel) {
 
     if (showLogs) {
         LogsScreen(
-            logs       = uiState.logs,
+            uiState    = uiState,
             onBack     = { showLogs = false },
             onClear    = viewModel::clearLogs
         )
@@ -187,7 +220,6 @@ fun MainScreen(
             .windowInsetsPadding(WindowInsets.safeDrawing)
             .background(BgMain)
     ) {
-        // ── App title bar ────────────────────────────────────────────────────
         item {
             Row(
                 modifier = Modifier
@@ -209,7 +241,6 @@ fun MainScreen(
             }
         }
 
-        // ── GENERAL ──────────────────────────────────────────────────────────
         item { SectionHeader("General") }
         item {
             GeneralSection(
@@ -221,7 +252,6 @@ fun MainScreen(
             )
         }
 
-        // ── FILES ─────────────────────────────────────────────────────────────
         item { SectionHeader("Files") }
         item {
             FilesSection(
@@ -232,22 +262,14 @@ fun MainScreen(
             )
         }
 
-        // ── DATABASE ──────────────────────────────────────────────────────────
         item { SectionHeader("Database") }
         item {
-            FlatCheckbox(
-                checked       = false,
-                label         = "Enable SQLite database",
-                enabled       = false,
-                onCheckedChange = {}
-            )
-            Spacer(modifier = Modifier.height(8.dp))
+            DatabaseSection(uiState = uiState, viewModel = viewModel)
         }
 
-        // ── SECURITY ──────────────────────────────────────────────────────────
         item { SectionHeader("Security") }
         item {
-            Column {
+            Column(modifier = Modifier.padding(horizontal = 16.dp)) {
                 FlatCheckbox(config.requireAuthorization, "Require authorization") {
                     viewModel.updateConfig { it.copy(requireAuthorization = !it.requireAuthorization) }
                 }
@@ -270,10 +292,9 @@ fun MainScreen(
             }
         }
 
-        // ── MISC ──────────────────────────────────────────────────────────────
         item { SectionHeader("Misc") }
         item {
-            Column {
+            Column(modifier = Modifier.padding(horizontal = 16.dp)) {
                 FlatCheckbox(config.autostartOnBoot, "Autostart on boot") {
                     viewModel.updateConfig { it.copy(autostartOnBoot = !it.autostartOnBoot) }
                 }
@@ -298,9 +319,41 @@ fun MainScreen(
                 FlatCheckbox(config.configureCors, "Configure CORS") {
                     viewModel.updateConfig { it.copy(configureCors = !it.configureCors) }
                 }
+                if (config.configureCors) {
+                    Column(modifier = Modifier.padding(start = 32.dp, end = 16.dp)) {
+                        CorsField("Allow Origin", config.corsAllowOrigin) { 
+                            viewModel.updateConfig { it.copy(corsAllowOrigin = it) }
+                        }
+                        CorsField("Allow Methods", config.corsAllowMethods) { 
+                            viewModel.updateConfig { it.copy(corsAllowMethods = it) }
+                        }
+                        CorsField("Allow Headers", config.corsAllowHeaders) { 
+                            viewModel.updateConfig { it.copy(corsAllowHeaders = it) }
+                        }
+                    }
+                }
                 Spacer(modifier = Modifier.height(32.dp))
             }
         }
+    }
+}
+
+@Composable
+fun CorsField(label: String, value: String, onValueChange: (String) -> Unit) {
+    Column(modifier = Modifier.padding(vertical = 4.dp)) {
+        Text(label, color = ColDim, fontSize = 11.sp)
+        OutlinedTextField(
+            value = value,
+            onValueChange = onValueChange,
+            modifier = Modifier.fillMaxWidth(),
+            textStyle = androidx.compose.ui.text.TextStyle(fontSize = 13.sp, color = ColText),
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedBorderColor = ColLink,
+                unfocusedBorderColor = Color(0xFF444444),
+                cursorColor = ColLink
+            ),
+            singleLine = true
+        )
     }
 }
 
@@ -321,203 +374,145 @@ fun GeneralSection(
     var ifaceMenuOpen by remember { mutableStateOf(false) }
 
     Column(modifier = Modifier.padding(horizontal = 16.dp)) {
-
-        // Status
+        Text(text = "Status: " + if (uiState.isRunning) "running ⚡" else "stopped", 
+             color = if (uiState.isRunning) ColActive else ColInact, 
+             fontWeight = FontWeight.Bold)
+        
+        Spacer(Modifier.height(8.dp))
+        Text("IP info:", color = ColDim, fontSize = 12.sp)
+        
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Text("Status:  ", color = ColText, fontSize = 15.sp)
-            Text(
-                text      = if (uiState.isRunning) "running" else "not running 💤",
-                color     = if (uiState.isRunning) ColActive else ColInact,
-                fontSize  = 15.sp,
-                fontWeight = FontWeight.Medium
-            )
-        }
-
-        Spacer(Modifier.height(10.dp))
-
-        // IP Info header
-        Text("IP info:", color = ColText, fontSize = 15.sp)
-
-        // Interface row
-        Row(
-            modifier = Modifier.padding(start = 8.dp, top = 6.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text("  - Interface: ", color = ColText, fontSize = 14.sp)
+            Text("- Interface: ", color = ColText, fontSize = 14.sp)
             Box {
-                Row(
-                    modifier = Modifier
-                        .clickable { ifaceMenuOpen = true }
-                        .background(BgCard, RoundedCornerShape(4.dp))
-                        .padding(horizontal = 8.dp, vertical = 2.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
+                Row(modifier = Modifier.clickable { ifaceMenuOpen = true }, verticalAlignment = Alignment.CenterVertically) {
                     Text(uiState.selectedInterface, color = ColLink, fontSize = 14.sp)
-                    Icon(Icons.Default.ArrowDropDown, contentDescription = null, tint = ColDim, modifier = Modifier.size(18.dp))
+                    Icon(Icons.Default.ArrowDropDown, contentDescription = null, tint = ColLink)
                 }
-                DropdownMenu(
-                    expanded         = ifaceMenuOpen,
-                    onDismissRequest = { ifaceMenuOpen = false }
-                ) {
-                    val ifaces = if (uiState.availableInterfaces.isEmpty())
-                        listOf(uiState.selectedInterface) else uiState.availableInterfaces
-                    for (iface in ifaces) {
-                        DropdownMenuItem(
-                            text    = { Text(iface, color = ColText) },
-                            onClick = {
-                                viewModel.setSelectedInterface(iface)
-                                ifaceMenuOpen = false
-                            }
-                        )
+                DropdownMenu(expanded = ifaceMenuOpen, onDismissRequest = { ifaceMenuOpen = false }) {
+                    uiState.availableInterfaces.forEach { iface ->
+                        DropdownMenuItem(text = { Text(iface) }, onClick = { 
+                            viewModel.setSelectedInterface(iface)
+                            ifaceMenuOpen = false 
+                        })
                     }
                 }
             }
         }
 
-        // IP version toggle
-        Row(
-            modifier = Modifier.padding(start = 8.dp, top = 6.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text("  - IP version: ", color = ColText, fontSize = 14.sp)
-            IpVersionToggle(
-                preferIpv6 = config.preferIpv6,
-                onToggle   = viewModel::setPreferIpv6
-            )
-        }
-
-        // IP address
-        Row(
-            modifier = Modifier.padding(start = 8.dp, top = 6.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text("  - IP address: ", color = ColText, fontSize = 14.sp)
-            val displayedIp = uiState.displayedIp
-            Text(
-                text     = displayedIp,
-                color    = ColLink,
-                fontSize = 14.sp,
-                modifier = Modifier.clickable { clipboard.setText(AnnotatedString(displayedIp)) }
-            )
-            Spacer(Modifier.width(6.dp))
-            Icon(
-                imageVector    = Icons.Default.ContentCopy,
-                contentDescription = "Copiar IP",
-                tint           = ColDim,
-                modifier       = Modifier
-                    .size(16.dp)
-                    .clickable { clipboard.setText(AnnotatedString(displayedIp)) }
-            )
-        }
-
-        Spacer(Modifier.height(8.dp))
-
-        // Port row
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Text("Port:  ", color = ColText, fontSize = 15.sp)
+            Text("- IP version: ", color = ColText, fontSize = 14.sp)
+            IpVersionToggle(config.preferIpv6) { viewModel.setPreferIpv6(it) }
+        }
+
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text("- IP address: ", color = ColText, fontSize = 14.sp)
+            Text(uiState.displayedIp, color = ColText, fontSize = 14.sp)
+            IconButton(onClick = { clipboard.setText(AnnotatedString(uiState.displayedIp)) }, modifier = Modifier.size(24.dp)) {
+                Icon(Icons.Default.ContentCopy, contentDescription = null, tint = ColDim, modifier = Modifier.size(16.dp))
+            }
+        }
+
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text("Port: ", color = ColText, fontSize = 14.sp)
             if (editingPort) {
                 OutlinedTextField(
-                    value         = portText,
-                    onValueChange = { v ->
-                        portText = v
-                        v.toIntOrNull()?.takeIf { it in 1024..65535 }?.let { viewModel.updatePort(it) }
-                    },
-                    singleLine    = true,
+                    value = portText,
+                    onValueChange = { portText = it },
+                    modifier = Modifier.width(100.dp),
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                    modifier      = Modifier.width(100.dp).height(48.dp),
-                    colors        = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor   = ColLink,
-                        unfocusedBorderColor = Color(0xFF444444),
-                        focusedTextColor     = ColText,
-                        unfocusedTextColor   = ColText,
-                    )
+                    colors = OutlinedTextFieldDefaults.colors(focusedTextColor = ColText, unfocusedTextColor = ColText)
                 )
-                Spacer(Modifier.width(6.dp))
-                Button(
-                    onClick  = { editingPort = false },
-                    modifier = Modifier.height(36.dp),
-                    colors   = ButtonDefaults.buttonColors(containerColor = BgBtn)
-                ) { Text("OK", color = ColText, fontSize = 13.sp) }
+                IconButton(onClick = { 
+                    portText.toIntOrNull()?.let { viewModel.updatePort(it) }
+                    editingPort = false 
+                }) { Icon(Icons.Default.PlayArrow, contentDescription = null, tint = ColActive) }
             } else {
-                Text(
-                    text      = config.port.toString(),
-                    color     = ColLink,
-                    fontSize  = 15.sp,
-                    textDecoration = TextDecoration.Underline,
-                    modifier  = Modifier.clickable { if (!uiState.isRunning) editingPort = true }
-                )
-                Spacer(Modifier.width(6.dp))
-                Icon(
-                    Icons.Default.Edit, contentDescription = "Editar puerto",
-                    tint = ColDim, modifier = Modifier.size(16.dp).clickable { if (!uiState.isRunning) editingPort = true }
-                )
+                Text(config.port.toString(), color = ColText, fontSize = 14.sp)
+                IconButton(onClick = { editingPort = true }, modifier = Modifier.size(24.dp)) {
+                    Icon(Icons.Default.Edit, contentDescription = null, tint = ColDim, modifier = Modifier.size(16.dp))
+                }
             }
         }
 
-        Spacer(Modifier.height(6.dp))
+        Text(
+            text = "URL: ${uiState.serverUrl}",
+            color = ColLink,
+            fontSize = 16.sp,
+            fontWeight = FontWeight.Bold,
+            textDecoration = TextDecoration.Underline,
+            modifier = Modifier.clickable { uriHandler.openUri(uiState.serverUrl) }
+        )
 
-        // URL row
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Text("URL:  ", color = ColText, fontSize = 15.sp)
-            Text(
-                text      = uiState.serverUrl,
-                color     = ColLink,
-                fontSize  = 16.sp,
-                fontWeight = FontWeight.Bold,
-                maxLines  = 1,
-                overflow  = TextOverflow.Ellipsis,
-                modifier  = Modifier.clickable { if (uiState.isRunning) uriHandler.openUri(uiState.serverUrl) }
-            )
-        }
-
-        Spacer(Modifier.height(12.dp))
-
-        // START / LOGS buttons
-        Row(
-            modifier  = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(4.dp)
-        ) {
+        Spacer(Modifier.height(16.dp))
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             Button(
-                onClick  = if (uiState.isRunning) onStop else onStart,
-                enabled  = if (uiState.isRunning) true else config.folderUri != null,
-                modifier = Modifier.weight(1f).height(46.dp),
-                shape    = RoundedCornerShape(6.dp),
-                colors   = ButtonDefaults.buttonColors(
-                    containerColor         = BgBtn,
-                    contentColor           = ColText,
-                    disabledContainerColor = Color(0xFF252525),
-                    disabledContentColor   = Color(0xFF555555),
-                )
+                onClick = if (uiState.isRunning) onStop else onStart,
+                modifier = Modifier.weight(1f),
+                colors = ButtonDefaults.buttonColors(containerColor = if (uiState.isRunning) Color(0xFF444444) else BgBtn),
+                shape = RoundedCornerShape(4.dp)
             ) {
-                Icon(
-                    imageVector     = if (uiState.isRunning) Icons.Default.Stop else Icons.Default.PlayArrow,
-                    contentDescription = null,
-                    modifier        = Modifier.size(18.dp)
-                )
-                Spacer(Modifier.width(4.dp))
-                Text(
-                    if (uiState.isRunning) "STOP" else "START",
-                    fontFamily = FontFamily.Monospace,
-                    fontWeight = FontWeight.Bold,
-                    fontSize   = 14.sp
-                )
+                Text(if (uiState.isRunning) "STOP" else "START", color = ColText)
             }
             Button(
-                onClick  = onShowLogs,
-                modifier = Modifier.weight(1f).height(46.dp),
-                shape    = RoundedCornerShape(6.dp),
-                colors   = ButtonDefaults.buttonColors(
-                    containerColor = BgBtn,
-                    contentColor   = ColText
-                )
+                onClick = onShowLogs,
+                modifier = Modifier.weight(1f),
+                colors = ButtonDefaults.buttonColors(containerColor = BgBtn),
+                shape = RoundedCornerShape(4.dp)
             ) {
-                Icon(Icons.Default.Terminal, contentDescription = null, modifier = Modifier.size(18.dp))
-                Spacer(Modifier.width(4.dp))
-                Text("LOGS", fontFamily = FontFamily.Monospace, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                Text("LOGS", color = ColText)
             }
         }
-
         Spacer(Modifier.height(12.dp))
+    }
+}
+
+// ── Database section ──────────────────────────────────────────────────────────
+@Composable
+fun DatabaseSection(uiState: ServerUiState, viewModel: ServerViewModel) {
+    val config = uiState.config
+    Column(modifier = Modifier.padding(horizontal = 16.dp)) {
+        FlatCheckbox(config.enableSqlite, "Enable SQLite database") {
+            viewModel.updateConfig { it.copy(enableSqlite = !it.enableSqlite) }
+        }
+        if (config.enableSqlite) {
+            Column(modifier = Modifier.padding(start = 32.dp)) {
+                Text(
+                    text = uiState.dbStatus,
+                    color = if (uiState.dbStatus == "Connected") ColActive else ColInact,
+                    fontSize = 12.sp
+                )
+                Text("Size: ${uiState.dbSize}", color = ColDim, fontSize = 12.sp)
+                Text("Tables: ${uiState.dbTables}", color = ColDim, fontSize = 12.sp)
+                
+                Spacer(Modifier.height(8.dp))
+                FlatCheckbox(config.enableDbModifyApi, "Enable API to modify tables data") {
+                    viewModel.updateConfig { it.copy(enableDbModifyApi = !it.enableDbModifyApi) }
+                }
+                FlatCheckbox(config.enableDbCustomSqlApi, "Enable API to call custom SQL") {
+                    viewModel.updateConfig { it.copy(enableDbCustomSqlApi = !it.enableDbCustomSqlApi) }
+                }
+                
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Button(
+                        onClick = { /* TODO */ },
+                        colors = ButtonDefaults.buttonColors(containerColor = BgBtn),
+                        shape = RoundedCornerShape(4.dp),
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Text("DELETE DATABASE", fontSize = 10.sp, color = Color(0xFFFF7B72))
+                    }
+                    Button(
+                        onClick = { /* TODO */ },
+                        colors = ButtonDefaults.buttonColors(containerColor = BgBtn),
+                        shape = RoundedCornerShape(4.dp),
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Text("EXPORT DATABASE", fontSize = 10.sp, color = ColText)
+                    }
+                }
+            }
+        }
+        Spacer(modifier = Modifier.height(8.dp))
     }
 }
 
@@ -529,59 +524,100 @@ fun FilesSection(
     isRunning: Boolean,
     onPickFolder: () -> Unit
 ) {
-    var folderMenuOpen by remember { mutableStateOf(false) }
+    var showVariantsDialog by remember { mutableStateOf(false) }
+
+    if (showVariantsDialog) {
+        FileAccessVariantsDialog(
+            currentVariant = config.fileAccessVariant,
+            onDismiss = { showVariantsDialog = false },
+            onSelect = { variant ->
+                viewModel.updateConfig { it.copy(fileAccessVariant = variant) }
+                showVariantsDialog = false
+                if (variant == "SAF") onPickFolder()
+            }
+        )
+    }
 
     Column {
-        // Root folder card
+        Text(text = "Root folder:", color = ColDim, fontSize = 12.sp, modifier = Modifier.padding(horizontal = 16.dp))
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp)
-                .background(BgCard, RoundedCornerShape(8.dp))
-                .padding(horizontal = 12.dp, vertical = 10.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
+                .background(BgCard, RoundedCornerShape(4.dp))
+                .clickable(enabled = !isRunning) { showVariantsDialog = true }
+                .padding(8.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Column(modifier = Modifier.weight(1f)) {
-                Text("Root folder:", color = ColText, fontWeight = FontWeight.Bold, fontSize = 14.sp)
-                Text(
-                    text     = config.folderDisplayPath.ifEmpty { "Ninguna carpeta seleccionada" },
-                    color    = if (config.folderDisplayPath.isEmpty()) ColDim else ColLink,
-                    fontSize = 13.sp,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis
-                )
-            }
-            Row {
-                IconButton(onClick = { if (!isRunning) onPickFolder() }) {
-                    Icon(Icons.Default.Folder, contentDescription = "Seleccionar", tint = ColDim)
-                }
-                Box {
-                    IconButton(onClick = { folderMenuOpen = true }) {
-                        Icon(Icons.Default.MoreVert, contentDescription = "Más opciones", tint = ColDim)
-                    }
-                    DropdownMenu(
-                        expanded         = folderMenuOpen,
-                        onDismissRequest = { folderMenuOpen = false }
-                    ) {
-                        DropdownMenuItem(
-                            text    = { Text("Cambiar carpeta", color = ColText) },
-                            onClick = { folderMenuOpen = false; if (!isRunning) onPickFolder() }
-                        )
-                    }
-                }
+            Icon(Icons.Default.Folder, contentDescription = null, tint = ColLink, modifier = Modifier.size(20.dp))
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(
+                text = if (config.fileAccessVariant == "File API") "Application's private folder" else config.folderDisplayPath.ifEmpty { "Not selected" },
+                color = ColText,
+                fontSize = 14.sp,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.weight(1f)
+            )
+            IconButton(onClick = { showVariantsDialog = true }, enabled = !isRunning) {
+                Icon(Icons.Default.MoreVert, contentDescription = null, tint = ColDim)
             }
         }
-
-        Spacer(Modifier.height(4.dp))
-
-        FlatCheckbox(config.renderFolderPages, "Render folder content pages") {
-            viewModel.updateConfig { it.copy(renderFolderPages = !it.renderFolderPages) }
+        Spacer(modifier = Modifier.height(8.dp))
+        Column(modifier = Modifier.padding(horizontal = 16.dp)) {
+            FlatCheckbox(config.renderFolderPages, "Render folder content pages") {
+                viewModel.updateConfig { it.copy(renderFolderPages = !it.renderFolderPages) }
+            }
+            FlatCheckbox(config.allowModification, "Allow file modification") {
+                viewModel.updateConfig { it.copy(allowModification = !it.allowModification) }
+            }
         }
-        FlatCheckbox(config.allowModification, "Allow file modification") {
-            viewModel.updateConfig { it.copy(allowModification = !it.allowModification) }
+        Spacer(modifier = Modifier.height(12.dp))
+    }
+}
+
+@Composable
+fun FileAccessVariantsDialog(
+    currentVariant: String,
+    onDismiss: () -> Unit,
+    onSelect: (String) -> Unit
+) {
+    androidx.compose.ui.window.Dialog(onDismissRequest = onDismiss) {
+        Surface(
+            shape = RoundedCornerShape(8.dp),
+            color = BgCard,
+            modifier = Modifier.fillMaxWidth().padding(16.dp)
+        ) {
+            Column(modifier = Modifier.padding(16.dp)) {
+                Text("File Access Variants", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = ColText)
+                Spacer(Modifier.height(16.dp))
+                
+                VariantItem("File API (default, recommended for most cases)", 
+                            "Direct file access, may require granting additional permissions on newer Android versions.",
+                            currentVariant == "File API") { onSelect("File API") }
+                
+                VariantItem("Storage Access Framework (SAF)", 
+                            "Access files using a standard Android file picker. Limited and sometimes slower access to files.",
+                            currentVariant == "SAF") { onSelect("SAF") }
+                
+                VariantItem("Media store", 
+                            "Access downloads, documents, photos, videos, and audio files through the system's media library.",
+                            currentVariant == "Media store") { onSelect("Media store") }
+            }
         }
-        Spacer(Modifier.height(8.dp))
+    }
+}
+
+@Composable
+fun VariantItem(title: String, description: String, isSelected: Boolean, onClick: () -> Unit) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onClick() }
+            .padding(vertical = 8.dp)
+    ) {
+        Text(title, color = if (isSelected) ColLink else ColText, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+        Text(description, color = ColDim, fontSize = 11.sp)
     }
 }
 
@@ -597,141 +633,176 @@ fun IpVersionToggle(preferIpv6: Boolean, onToggle: (Boolean) -> Unit) {
             }
             Box(
                 modifier = Modifier
-                    .background(
-                        color = if (selected) Color(0xFF3A3A3A) else Color(0xFF222222),
-                        shape = shape
-                    )
+                    .background(color = if (selected) Color(0xFF3A3A3A) else Color(0xFF222222), shape = shape)
                     .clickable { onToggle(isV6) }
-                    .padding(horizontal = 12.dp, vertical = 4.dp),
-                contentAlignment = Alignment.Center
+                    .padding(horizontal = 12.dp, vertical = 4.dp)
             ) {
-                Text(
-                    text      = label,
-                    color     = if (selected) ColText else ColDim,
-                    fontSize  = 12.sp,
-                    fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal
-                )
+                Text(label, color = if (selected) ColText else ColDim, fontSize = 12.sp, fontWeight = FontWeight.Bold)
             }
         }
     }
 }
 
-// ── Reusable flat checkbox row ────────────────────────────────────────────────
-@Composable
-fun FlatCheckbox(
-    checked: Boolean,
-    label: String,
-    enabled: Boolean = true,
-    onCheckedChange: (Boolean) -> Unit
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(enabled = enabled) { onCheckedChange(!checked) }
-            .padding(horizontal = 8.dp, vertical = 2.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Checkbox(
-            checked         = checked,
-            onCheckedChange = onCheckedChange,
-            enabled         = enabled,
-            colors          = CheckboxDefaults.colors(
-                checkedColor   = ColLink,
-                uncheckedColor = ColDim,
-                disabledCheckedColor   = Color(0xFF555555),
-                disabledUncheckedColor = Color(0xFF444444),
-            )
-        )
-        Text(
-            text     = label,
-            color    = if (enabled) ColText else ColDim,
-            fontSize = 14.sp,
-            modifier = Modifier.weight(1f)
-        )
-    }
-}
-
-// ── Section header ────────────────────────────────────────────────────────────
 @Composable
 fun SectionHeader(title: String) {
     Text(
-        text     = "- $title",
-        color    = ColSection,
-        fontSize = 13.sp,
+        text = "- $title",
+        color = ColSection,
+        fontSize = 14.sp,
         fontWeight = FontWeight.Medium,
         modifier = Modifier.padding(start = 16.dp, top = 12.dp, bottom = 4.dp)
     )
 }
 
+@Composable
+fun FlatCheckbox(checked: Boolean, label: String, enabled: Boolean = true, onCheckedChange: (Boolean) -> Unit) {
+    Row(
+        modifier = Modifier.fillMaxWidth().clickable(enabled = enabled) { onCheckedChange(!checked) },
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Checkbox(
+            checked = checked,
+            onCheckedChange = null,
+            enabled = enabled,
+            colors = CheckboxDefaults.colors(checkedColor = ColLink, uncheckedColor = ColDim, checkmarkColor = BgMain)
+        )
+        Text(label, color = if (enabled) ColText else ColDim, fontSize = 14.sp)
+    }
+}
+
 // ── Logs screen ───────────────────────────────────────────────────────────────
 @Composable
 fun LogsScreen(
-    logs: List<String>,
+    uiState: ServerUiState,
     onBack: () -> Unit,
     onClear: () -> Unit
 ) {
+    val logs = uiState.requestLogs
     val listState = rememberLazyListState()
+    var selectedLog by remember { mutableStateOf<LogEntry?>(null) }
+
     LaunchedEffect(logs.size) {
         if (logs.isNotEmpty()) listState.animateScrollToItem(logs.size - 1)
     }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .windowInsetsPadding(WindowInsets.safeDrawing)
-            .background(BgMain)
-    ) {
-        // Custom top bar
+    Column(modifier = Modifier.fillMaxSize().background(BgMain)) {
+        // Toolbar
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(BgCard)
-                .padding(horizontal = 4.dp, vertical = 4.dp),
+            modifier = Modifier.fillMaxWidth().background(BgCard).padding(horizontal = 4.dp, vertical = 4.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             IconButton(onClick = onBack) {
                 Icon(Icons.Default.ArrowBack, contentDescription = "Volver", tint = ColText)
             }
             Text(
-                text       = "Logs",
-                color      = ColText,
+                text       = "Filter",
                 fontSize   = 18.sp,
                 fontWeight = FontWeight.Bold,
-                fontFamily = FontFamily.Monospace,
+                color      = ColText,
                 modifier   = Modifier.weight(1f)
             )
-            IconButton(onClick = onClear) {
-                Icon(Icons.Default.Delete, contentDescription = "Limpiar", tint = Color(0xFFFF7B72))
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text("↓0 B/s ↑0 B/s", color = ColDim, fontSize = 10.sp)
+                Spacer(Modifier.width(8.dp))
+                IconButton(onClick = {}) {
+                    Icon(Icons.Default.MoreVert, contentDescription = "Menu", tint = ColText)
+                }
             }
         }
 
         if (logs.isEmpty()) {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text("Sin logs aún.", color = ColDim, fontFamily = FontFamily.Monospace)
+                Text("No requests yet", color = ColDim, fontFamily = FontFamily.Monospace)
             }
         } else {
-            LazyColumn(
-                state    = listState,
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(horizontal = 12.dp, vertical = 8.dp),
-                verticalArrangement = Arrangement.spacedBy(2.dp)
-            ) {
-                items(logs) { entry ->
-                    Text(
-                        text       = entry,
-                        fontFamily = FontFamily.Monospace,
-                        fontSize   = 12.sp,
-                        color      = when {
-                            entry.contains("Error", ignoreCase = true) -> Color(0xFFFF7B72)
-                            entry.contains("iniciado")                 -> Color(0xFF4CAF50)
-                            entry.contains("detenido")                 -> Color(0xFFFF9800)
-                            else                                       -> ColText
-                        }
-                    )
+            Row(modifier = Modifier.fillMaxSize()) {
+                // Left Panel: List
+                LazyColumn(
+                    state    = listState,
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxSize()
+                        .padding(horizontal = 8.dp),
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    items(logs) { entry ->
+                        LogItem(
+                            entry      = entry,
+                            isSelected = selectedLog?.id == entry.id,
+                            onClick    = { selectedLog = entry }
+                        )
+                    }
                 }
-                item { Spacer(Modifier.height(16.dp)) }
+
+                // Right Panel: Details
+                if (selectedLog != null) {
+                    Box(modifier = Modifier.weight(1.2f).fillMaxSize().background(BgCard).padding(8.dp)) {
+                        LogDetailView(selectedLog!!)
+                    }
+                }
             }
         }
+    }
+}
+
+@Composable
+fun LogItem(entry: LogEntry, isSelected: Boolean, onClick: () -> Unit) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(if (isSelected) BgBtn else Color.Transparent)
+            .clickable { onClick() }
+            .padding(8.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = entry.method,
+            color = if (entry.method == "GET") Color(0xFF4CAF50) else Color(0xFFFFA040),
+            fontWeight = FontWeight.Bold,
+            fontSize = 12.sp,
+            modifier = Modifier.width(40.dp)
+        )
+        Column(modifier = Modifier.weight(1f)) {
+            Text(entry.path, color = ColText, fontSize = 12.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Text(entry.timeFormatted, color = ColDim, fontSize = 10.sp)
+        }
+        Text(
+            text = "${entry.statusCode} OK",
+            color = if (entry.statusCode < 400) Color(0xFF4CAF50) else Color(0xFFFF7B72),
+            fontSize = 12.sp,
+            fontWeight = FontWeight.Bold
+        )
+    }
+}
+
+@Composable
+fun LogDetailView(log: LogEntry) {
+    val detailText = """
+        --- Timing ---
+        Started: ${log.fullStartedAt} (${log.startedAt} ms)
+        Ended: ${log.fullEndedAt} (${log.endedAt} ms)
+        Duration: ${log.durationMs} ms
+        
+        --- Client ---
+        Host: ${log.clientIp}
+        Connection id: ${log.id.substring(0, 8)}
+        
+        --- Request ---
+        ${log.method} ${log.path}
+        ${log.requestHeaders.entries.joinToString("\n") { "${it.key}: ${it.value}" }}
+        
+        --- Response ---
+        ${log.statusCode} ${log.statusDescription}
+        ${log.responseHeaders.entries.joinToString("\n") { "${it.key}: ${it.value}" }}
+    """.trimIndent()
+
+    androidx.compose.foundation.text.selection.SelectionContainer {
+        Text(
+            text = detailText,
+            color = ColText,
+            fontFamily = FontFamily.Monospace,
+            fontSize = 11.sp,
+            modifier = Modifier.fillMaxSize()
+        )
     }
 }
