@@ -42,6 +42,7 @@ data class ServerConfig(
     val enableSqlite: Boolean = false,
     val enableDbModifyApi: Boolean = false,
     val enableDbCustomSqlApi: Boolean = false,
+    val serveWelcomeFile: Boolean = true,
 )
 
 data class ServerUiState(
@@ -83,6 +84,10 @@ class ServerViewModel(application: Application) : AndroidViewModel(application) 
         _uiState.update { it.copy(config = updater(it.config)) }
     }
 
+    fun updateServeWelcomeFile(serve: Boolean) {
+        _uiState.update { it.copy(config = it.config.copy(serveWelcomeFile = serve)) }
+    }
+
     fun setPreferIpv6(prefer: Boolean) {
         _uiState.update { it.copy(config = it.config.copy(preferIpv6 = prefer)) }
     }
@@ -109,6 +114,7 @@ class ServerViewModel(application: Application) : AndroidViewModel(application) 
         context.getSharedPreferences("xlocalhost_prefs", android.content.Context.MODE_PRIVATE)
             .edit()
             .putBoolean("autostart_on_boot", config.autostartOnBoot)
+            .putBoolean("serve_welcome_file", config.serveWelcomeFile)
             .apply()
 
         val intent = Intent(context, ServerService::class.java).apply {
@@ -119,6 +125,7 @@ class ServerViewModel(application: Application) : AndroidViewModel(application) 
             putExtra(ServerService.EXTRA_ENABLE_SQLITE, config.enableSqlite)
             putExtra(ServerService.EXTRA_DB_MODIFY, config.enableDbModifyApi)
             putExtra(ServerService.EXTRA_DB_CUSTOM_SQL, config.enableDbCustomSqlApi)
+            putExtra(ServerService.EXTRA_SERVE_WELCOME_FILE, config.serveWelcomeFile)
             if (config.configureCors) {
                 putExtra(ServerService.EXTRA_CORS_ORIGIN, config.corsAllowOrigin)
                 putExtra(ServerService.EXTRA_CORS_METHODS, config.corsAllowMethods)

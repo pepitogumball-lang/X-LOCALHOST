@@ -35,12 +35,14 @@ class BootReceiver : BroadcastReceiver() {
         Log.i(TAG, "Boot completed — starting server on port $port")
 
         val allowMod = prefs.getBoolean("allow_mod", false)
+        val serveWelcomeFile = prefs.getBoolean("serve_welcome_file", true)
 
         val serviceIntent = Intent(context, ServerService::class.java).apply {
             action = ServerService.ACTION_START
             putExtra(ServerService.EXTRA_FOLDER_URI, uriString)
             putExtra(ServerService.EXTRA_PORT, port)
             putExtra(ServerService.EXTRA_ALLOW_MOD, allowMod)
+            putExtra(ServerService.EXTRA_SERVE_WELCOME_FILE, serveWelcomeFile)
         }
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {

@@ -27,6 +27,7 @@ class ServerService : Service() {
         const val EXTRA_ENABLE_SQLITE = "extra_enable_sqlite"
         const val EXTRA_DB_MODIFY    = "extra_db_modify"
         const val EXTRA_DB_CUSTOM_SQL = "extra_db_custom_sql"
+        const val EXTRA_SERVE_WELCOME_FILE = "extra_serve_welcome_file"
         const val EXTRA_CORS_ORIGIN  = "extra_cors_origin"
         const val EXTRA_CORS_METHODS = "extra_cors_methods"
         const val EXTRA_CORS_HEADERS = "extra_cors_headers"
@@ -52,6 +53,7 @@ class ServerService : Service() {
                 val enableSqlite = intent.getBooleanExtra(EXTRA_ENABLE_SQLITE, false)
                 val dbModify = intent.getBooleanExtra(EXTRA_DB_MODIFY, false)
                 val dbCustomSql = intent.getBooleanExtra(EXTRA_DB_CUSTOM_SQL, false)
+                val serveWelcomeFile = intent.getBooleanExtra(EXTRA_SERVE_WELCOME_FILE, true)
                 val corsOrigin  = intent.getStringExtra(EXTRA_CORS_ORIGIN)
                 val corsMethods = intent.getStringExtra(EXTRA_CORS_METHODS)
                 val corsHeaders = intent.getStringExtra(EXTRA_CORS_HEADERS)
@@ -64,7 +66,7 @@ class ServerService : Service() {
                 acquireWakeLock()
                 startForeground(NOTIFICATION_ID, buildNotification(port))
                 val cors = if (corsOrigin != null) LocalWebServer.CorsConfig(corsOrigin, corsMethods ?: "*", corsHeaders ?: "*") else null
-                startWebServer(folderUri, port, allowMod, enableSqlite, dbModify, dbCustomSql, cors)
+                startWebServer(folderUri, port, allowMod, enableSqlite, dbModify, dbCustomSql, cors, serveWelcomeFile)
             }
             ACTION_STOP -> {
                 stopWebServer()
@@ -89,11 +91,12 @@ class ServerService : Service() {
         enableSqlite: Boolean = false,
         dbModify: Boolean = false,
         dbCustomSql: Boolean = false,
-        cors: LocalWebServer.CorsConfig? = null
+        corsConfig: LocalWebServer.CorsConfig? = null,
+        serveWelcomeFile: Boolean = false
     ) {
         try {
             webServer?.stop()
-            webServer = LocalWebServer(applicationContext, folderUri, port, allowMod, enableSqlite, dbModify, dbCustomSql, cors).apply {
+            webServer = LocalWebServer(applicationContext, folderUri, port, allowMod, enableSqlite, dbModify, dbCustomSql, corsConfig, serveWelcomeFile).apply {
                 onRequestLog = { log ->
                     // We need a way to communicate back to the ViewModel/Activity
                     // For now, let's use a broadcast or a shared state if possible.

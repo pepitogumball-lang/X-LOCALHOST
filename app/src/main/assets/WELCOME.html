@@ -1,0 +1,1434 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#0f172a" />
+  <title>X-LOCALHOST — Welcome</title>
+  <style>
+    :root{
+      --bg:#0b1020;
+      --panel:#11172a;
+      --panel2:#0f1726;
+      --text:#e8eefc;
+      --muted:#a9b4d0;
+      --accent:#6ee7ff;
+      --accent2:#8b5cf6;
+      --line:rgba(255,255,255,.10);
+      --ok:#34d399;
+      --warn:#fbbf24;
+      --shadow: 0 18px 60px rgba(0,0,0,.35);
+      --radius: 24px;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      background:
+        radial-gradient(circle at top left, rgba(110,231,255,.12), transparent 30%),
+        radial-gradient(circle at top right, rgba(139,92,246,.14), transparent 28%),
+        linear-gradient(180deg, #070b16, var(--bg));
+      color:var(--text);
+      min-height:100vh;
+    }
+    a{color:inherit}
+    .wrap{
+      width:min(1100px, calc(100% - 32px));
+      margin:0 auto;
+      padding:28px 0 40px;
+    }
+    .hero{
+      display:grid;
+      grid-template-columns: 1.3fr .9fr;
+      gap:18px;
+      align-items:stretch;
+    }
+    .card{
+      background: linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.03));
+      border:1px solid var(--line);
+      box-shadow: var(--shadow);
+      border-radius: var(--radius);
+      backdrop-filter: blur(14px);
+    }
+    .hero-main{
+      padding:28px;
+      position:relative;
+      overflow:hidden;
+    }
+    .hero-main:before{
+      content:"";
+      position:absolute;
+      inset:-2px;
+      background: radial-gradient(circle at 20% 20%, rgba(110,231,255,.18), transparent 24%),
+                  radial-gradient(circle at 80% 0%, rgba(139,92,246,.18), transparent 22%);
+      pointer-events:none;
+      opacity:.9;
+    }
+    .hero-main > *{position:relative}
+    .brand{
+      display:flex;
+      align-items:center;
+      gap:14px;
+      margin-bottom:18px;
+    }
+    .logo{
+      width:52px;height:52px;border-radius:18px;
+      display:grid;place-items:center;
+      background: linear-gradient(135deg, rgba(110,231,255,.2), rgba(139,92,246,.25));
+      border:1px solid rgba(255,255,255,.12);
+      font-size:24px;
+    }
+    .eyebrow{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding:8px 12px;
+      border-radius:999px;
+      background: rgba(255,255,255,.06);
+      border:1px solid var(--line);
+      color:var(--muted);
+      font-size:13px;
+      margin-bottom:14px;
+    }
+    h1{
+      margin:0;
+      font-size: clamp(34px, 5vw, 58px);
+      line-height:1;
+      letter-spacing:-.04em;
+    }
+    .subtitle{
+      margin:16px 0 0;
+      font-size: clamp(16px, 2.1vw, 20px);
+      line-height:1.7;
+      color:var(--muted);
+      max-width: 60ch;
+    }
+    .status-row{
+      display:flex;flex-wrap:wrap;gap:10px;
+      margin-top:22px;
+    }
+    .pill{
+      display:inline-flex;align-items:center;gap:8px;
+      padding:10px 14px;
+      border-radius:999px;
+      background: rgba(255,255,255,.06);
+      border:1px solid var(--line);
+      color:var(--text);
+      font-size:14px;
+    }
+    .pill strong{font-weight:700}
+    .side{
+      padding:20px;
+      display:flex;
+      flex-direction:column;
+      gap:14px;
+    }
+    .side h2{
+      margin:0;
+      font-size:18px;
+      letter-spacing:-.02em;
+    }
+    .side p{
+      margin:0;
+      color:var(--muted);
+      line-height:1.65;
+      font-size:14px;
+    }
+    .lang-box{
+      display:grid;
+      gap:10px;
+    }
+    label{
+      font-size:13px;
+      color:var(--muted);
+    }
+    select, button{
+      font:inherit;
+    }
+    select{
+      width:100%;
+      appearance:none;
+      border-radius:16px;
+      border:1px solid var(--line);
+      background: rgba(10,15,28,.9);
+      color:var(--text);
+      padding:14px 16px;
+      outline:none;
+    }
+    .btn-row{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+    }
+    .btn{
+      border:none;
+      border-radius:16px;
+      padding:12px 16px;
+      cursor:pointer;
+      color:var(--text);
+      background: linear-gradient(135deg, rgba(110,231,255,.18), rgba(139,92,246,.22));
+      border:1px solid rgba(255,255,255,.12);
+      transition: transform .16s ease, opacity .16s ease;
+    }
+    .btn.secondary{
+      background: rgba(255,255,255,.05);
+    }
+    .btn:hover{transform:translateY(-1px)}
+    .btn:active{transform:translateY(0)}
+    .grid{
+      display:grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap:18px;
+      margin-top:18px;
+    }
+    .section{
+      padding:22px;
+    }
+    .section h3{
+      margin:0 0 10px;
+      font-size:18px;
+      letter-spacing:-.02em;
+    }
+    .section p, .section li{
+      color:var(--muted);
+      line-height:1.7;
+      font-size:14px;
+    }
+    .section ul{
+      margin:10px 0 0 18px;
+      padding:0;
+    }
+    code,kbd{
+      background: rgba(255,255,255,.08);
+      border:1px solid var(--line);
+      padding:2px 6px;
+      border-radius:8px;
+      color:#fff;
+    }
+    .steps{
+      display:grid;
+      gap:12px;
+      margin-top:8px;
+    }
+    .step{
+      display:flex;
+      gap:12px;
+      align-items:flex-start;
+      padding:12px 0;
+      border-top:1px solid var(--line);
+    }
+    .step:first-child{border-top:none;padding-top:0}
+    .num{
+      width:30px;height:30px;border-radius:999px;
+      display:grid;place-items:center;
+      background:rgba(110,231,255,.14);
+      border:1px solid rgba(110,231,255,.25);
+      color:var(--accent);
+      font-weight:700;
+      flex:none;
+    }
+    .footer{
+      margin-top:18px;
+      text-align:center;
+      color:var(--muted);
+      font-size:13px;
+      padding:14px;
+    }
+    .tiny{
+      font-size:12px;
+      color:var(--muted);
+    }
+    .doc-list{
+      display:grid;
+      gap:10px;
+      margin-top:10px;
+    }
+    .doc-item{
+      padding:12px 14px;
+      border-radius:16px;
+      background: rgba(255,255,255,.04);
+      border:1px solid var(--line);
+    }
+    .doc-item strong{
+      display:block;
+      margin-bottom:4px;
+    }
+
+    @media (max-width: 920px){
+      .hero, .grid{grid-template-columns:1fr}
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <section class="hero">
+      <div class="card hero-main">
+        <div class="brand">
+          <div class="logo">X</div>
+          <div>
+            <div class="eyebrow" id="eyebrow">🟣 WELCOME FILE • LOCAL SERVER START PAGE</div>
+            <h1 id="title">Welcome to X-LOCALHOST</h1>
+          </div>
+        </div>
+        <p class="subtitle" id="subtitle">
+          Este archivo es la pantalla de bienvenida por defecto del servidor. Si no existe un
+          <code>index.html</code>, X-LOCALHOST puede mostrar esta página para explicar qué hace el servidor
+          y cómo empezar.
+        </p>
+
+        <div class="status-row">
+          <div class="pill">🌐 <strong id="pill1">Local web server</strong></div>
+          <div class="pill">📁 <strong id="pill2">Serves selected folders</strong></div>
+          <div class="pill">⚡ <strong id="pill3">Port 8080</strong></div>
+        </div>
+      </div>
+
+      <aside class="card side">
+        <div>
+          <h2 id="langTitle">Cambiar idioma</h2>
+          <p id="langDesc">
+            Selecciona uno de los 28 idiomas soportados para cambiar el texto principal del welcome.
+          </p>
+        </div>
+
+        <div class="lang-box">
+          <label for="lang" id="langLabel">Idioma</label>
+          <select id="lang"></select>
+        </div>
+
+        <div class="btn-row">
+          <button class="btn" id="copyBtn">Copiar nombre</button>
+          <button class="btn secondary" id="resetBtn">Reset</button>
+        </div>
+
+        <p class="tiny" id="note">
+          Tip: si quieres que esta página sea la default, sirve este archivo cuando no haya
+          <code>index.html</code> en la carpeta.
+        </p>
+      </aside>
+    </section>
+
+    <section class="grid">
+      <article class="card section">
+        <h3 id="howTitle">Cómo funciona</h3>
+        <div class="steps" id="howSteps"></div>
+      </article>
+
+      <article class="card section">
+        <h3 id="featuresTitle">Qué hace X-LOCALHOST</h3>
+        <div class="doc-list" id="featuresList"></div>
+      </article>
+
+      <article class="card section">
+        <h3 id="startTitle">Empieza rápido</h3>
+        <p id="startText">
+          Abre el selector de carpeta, elige tu proyecto y deja que el servidor sirva los archivos desde ahí.
+          Si el usuario entra a la raíz, esta bienvenida puede aparecer antes de mostrar el directorio.
+        </p>
+        <ul id="startList"></ul>
+      </article>
+    </section>
+
+    <div class="card footer">
+      <span id="footerText">X-LOCALHOST · Welcome file / Página de bienvenida</span>
+    </div>
+  </div>
+
+  <script>
+    const translations = {
+      es: {
+        name: "Español",
+        eyebrow: "🟣 ARCHIVO DE BIENVENIDA • PÁGINA INICIAL DEL SERVIDOR LOCAL",
+        title: "Bienvenido a X-LOCALHOST",
+        subtitle: "Este archivo es la pantalla de bienvenida por defecto del servidor. Si no existe un index.html, X-LOCALHOST puede mostrar esta página para explicar qué hace el servidor y cómo empezar.",
+        pill1: "Servidor web local",
+        pill2: "Sirve carpetas elegidas",
+        pill3: "Puerto 8080",
+        langTitle: "Cambiar idioma",
+        langDesc: "Selecciona uno de los 28 idiomas soportados para cambiar el texto principal del welcome.",
+        langLabel: "Idioma",
+        note: "Tip: si quieres que esta página sea la default, sirve este archivo cuando no haya index.html en la carpeta.",
+        howTitle: "Cómo funciona",
+        howSteps: [
+          "El usuario abre la raíz del servidor, por ejemplo /.",
+          "X-LOCALHOST revisa si hay un archivo principal como index.html.",
+          "Si no existe, muestra WELCOME.html como página por defecto."
+        ],
+        featuresTitle: "Qué hace X-LOCALHOST",
+        featuresList: [
+          { t: "Servidor HTTP real", d: "Funciona como un servidor local de verdad, no solo como visor de archivos." },
+          { t: "Carpeta elegida por el usuario", d: "Sirve contenido desde una carpeta seleccionada con SAF." },
+          { t: "Detección de MIME", d: "Reconoce tipos de archivo para que todo se entregue correctamente." },
+          { t: "Servicio en segundo plano", d: "Puede seguir activo con notificación persistente." }
+        ],
+        startTitle: "Empieza rápido",
+        startText: "Abre el selector de carpeta, elige tu proyecto y deja que el servidor sirva los archivos desde ahí. Si el usuario entra a la raíz, esta bienvenida puede aparecer antes de mostrar el directorio.",
+        startList: [
+          "Crea tu index.html cuando quieras sustituir esta bienvenida.",
+          "Mantén este archivo como fallback para carpetas vacías.",
+          "Personaliza colores, textos y enlaces si quieres."
+        ],
+        footerText: "X-LOCALHOST · Archivo welcome / Página de bienvenida"
+      },
+      en: {
+        name: "English",
+        eyebrow: "🟣 WELCOME FILE • LOCAL SERVER START PAGE",
+        title: "Welcome to X-LOCALHOST",
+        subtitle: "This file is the server’s default welcome screen. If there is no index.html, X-LOCALHOST can show this page to explain what the server does and how to start.",
+        pill1: "Local web server",
+        pill2: "Serves chosen folders",
+        pill3: "Port 8080",
+        langTitle: "Change language",
+        langDesc: "Pick one of the 28 supported languages to swap the main welcome text.",
+        langLabel: "Language",
+        note: "Tip: if you want this page to be the default, serve it when there is no index.html in the folder.",
+        howTitle: "How it works",
+        howSteps: [
+          "The user opens the server root, for example /.",
+          "X-LOCALHOST checks whether a main file like index.html exists.",
+          "If it does not exist, WELCOME.html becomes the default page."
+        ],
+        featuresTitle: "What X-LOCALHOST does",
+        featuresList: [
+          { t: "Real HTTP server", d: "Acts like a proper local server, not only a file viewer." },
+          { t: "User-selected folder", d: "Serves content from a folder chosen with SAF." },
+          { t: "MIME detection", d: "Recognizes file types so content is delivered correctly." },
+          { t: "Background service", d: "Can stay running with a persistent notification." }
+        ],
+        startTitle: "Quick start",
+        startText: "Open the folder picker, choose your project, and let the server serve files from there. If the user lands on the root path, this welcome can appear before the directory listing.",
+        startList: [
+          "Create your index.html when you want to replace this welcome.",
+          "Keep this file as a fallback for empty folders.",
+          "Customize colors, text, and links as needed."
+        ],
+        footerText: "X-LOCALHOST · Welcome file / Start page"
+      },
+      pt: {
+        name: "Português",
+        eyebrow: "🟣 ARQUIVO DE BOAS-VINDAS • PÁGINA INICIAL DO SERVIDOR LOCAL",
+        title: "Bem-vindo ao X-LOCALHOST",
+        subtitle: "Este arquivo é a tela de boas-vindas padrão do servidor. Se não houver um index.html, o X-LOCALHOST pode mostrar esta página para explicar o que o servidor faz e como começar.",
+        pill1: "Servidor web local",
+        pill2: "Serve pastas selecionadas",
+        pill3: "Porta 8080",
+        langTitle: "Mudar idioma",
+        langDesc: "Escolha um dos 28 idiomas suportados para trocar o texto principal de boas-vindas.",
+        langLabel: "Idioma",
+        note: "Dica: se você quiser que esta página seja o padrão, sirva-a quando não houver um index.html na pasta.",
+        howTitle: "Como funciona",
+        howSteps: [
+          "O usuário abre a raiz do servidor, por exemplo /.",
+          "O X-LOCALHOST verifica se existe um arquivo principal como index.html.",
+          "Se não existir, WELCOME.html se torna a página padrão."
+        ],
+        featuresTitle: "O que o X-LOCALHOST faz",
+        featuresList: [
+          { t: "Servidor HTTP real", d: "Atua como um servidor local adequado, não apenas um visualizador de arquivos." },
+          { t: "Pasta selecionada pelo usuário", d: "Serve conteúdo de uma pasta escolhida com SAF." },
+          { t: "Detecção de MIME", d: "Reconhece tipos de arquivo para que o conteúdo seja entregue corretamente." },
+          { t: "Serviço em segundo plano", d: "Pode continuar em execução com uma notificação persistente." }
+        ],
+        startTitle: "Início rápido",
+        startText: "Abra o seletor de pastas, escolha seu projeto e deixe o servidor servir os arquivos de lá. Se o usuário acessar o caminho raiz, esta mensagem de boas-vindas pode aparecer antes da listagem do diretório.",
+        startList: [
+          "Crie seu index.html quando quiser substituir esta mensagem de boas-vindas.",
+          "Mantenha este arquivo como um fallback para pastas vazias.",
+          "Personalize cores, texto e links conforme necessário."
+        ],
+        footerText: "X-LOCALHOST · Arquivo de boas-vindas / Página inicial"
+      },
+      fr: {
+        name: "Français",
+        eyebrow: "🟣 FICHIER DE BIENVENUE • PAGE DE DÉMARRAGE DU SERVEUR LOCAL",
+        title: "Bienvenue sur X-LOCALHOST",
+        subtitle: "Ce fichier est l'écran d'accueil par défaut du serveur. S'il n'y a pas de fichier index.html, X-LOCALHOST peut afficher cette page pour expliquer ce que fait le serveur et comment démarrer.",
+        pill1: "Serveur web local",
+        pill2: "Sert les dossiers choisis",
+        pill3: "Port 8080",
+        langTitle: "Changer de langue",
+        langDesc: "Choisissez l'une des 28 langues prises en charge pour changer le texte principal de bienvenue.",
+        langLabel: "Langue",
+        note: "Astuce : si vous voulez que cette page soit la page par défaut, servez-la lorsqu'il n'y a pas de fichier index.html dans le dossier.",
+        howTitle: "Comment ça marche",
+        howSteps: [
+          "L'utilisateur ouvre la racine du serveur, par exemple /.",
+          "X-LOCALHOST vérifie si un fichier principal comme index.html existe.",
+          "S'il n'existe pas, WELCOME.html devient la page par défaut."
+        ],
+        featuresTitle: "Ce que fait X-LOCALHOST",
+        featuresList: [
+          { t: "Véritable serveur HTTP", d: "Agit comme un véritable serveur local, pas seulement un visualiseur de fichiers." },
+          { t: "Dossier sélectionné par l'utilisateur", d: "Sert le contenu d'un dossier choisi avec SAF." },
+          { t: "Détection MIME", d: "Reconnaît les types de fichiers afin que le contenu soit livré correctement." },
+          { t: "Service en arrière-plan", d: "Peut rester en cours d'exécution avec une notification persistante." }
+        ],
+        startTitle: "Démarrage rapide",
+        startText: "Ouvrez le sélecteur de dossiers, choisissez votre projet et laissez le serveur servir les fichiers à partir de là. Si l'utilisateur arrive sur le chemin racine, cet accueil peut apparaître avant la liste des répertoires.",
+        startList: [
+          "Créez votre index.html lorsque vous souhaitez remplacer cet accueil.",
+          "Gardez ce fichier comme solution de repli pour les dossiers vides.",
+          "Personnalisez les couleurs, le texte et les liens si nécessaire."
+        ],
+        footerText: "X-LOCALHOST · Fichier de bienvenue / Page de démarrage"
+      },
+      de: {
+        name: "Deutsch",
+        eyebrow: "🟣 WILLKOMMENSDATEI • LOKALE SERVER-STARTSEITE",
+        title: "Willkommen bei X-LOCALHOST",
+        subtitle: "Diese Datei ist der Standard-Willkommensbildschirm des Servers. Wenn keine index.html vorhanden ist, kann X-LOCALHOST diese Seite anzeigen, um zu erklären, was der Server tut und wie man startet.",
+        pill1: "Lokaler Webserver",
+        pill2: "Dient ausgewählten Ordnern",
+        pill3: "Port 8080",
+        langTitle: "Sprache ändern",
+        langDesc: "Wählen Sie eine der 28 unterstützten Sprachen, um den Haupt-Willkommenstext zu ändern.",
+        langLabel: "Sprache",
+        note: "Tipp: Wenn Sie möchten, dass diese Seite die Standardseite ist, stellen Sie sie bereit, wenn keine index.html im Ordner vorhanden ist.",
+        howTitle: "Wie es funktioniert",
+        howSteps: [
+          "Der Benutzer öffnet das Server-Root, zum Beispiel /.",
+          "X-LOCALHOST prüft, ob eine Hauptdatei wie index.html existiert.",
+          "Wenn sie nicht existiert, wird WELCOME.html zur Standardseite."
+        ],
+        featuresTitle: "Was X-LOCALHOST tut",
+        featuresList: [
+          { t: "Echter HTTP-Server", d: "Verhält sich wie ein richtiger lokaler Server, nicht nur ein Dateibetrachter." },
+          { t: "Vom Benutzer ausgewählter Ordner", d: "Dient Inhalte aus einem mit SAF ausgewählten Ordner." },
+          { t: "MIME-Erkennung", d: "Erkennt Dateitypen, damit Inhalte korrekt geliefert werden." },
+          { t: "Hintergrunddienst", d: "Kann mit einer persistenten Benachrichtigung weiterlaufen." }
+        ],
+        startTitle: "Schnellstart",
+        startText: "Öffnen Sie die Ordnerauswahl, wählen Sie Ihr Projekt und lassen Sie den Server Dateien von dort aus bereitstellen. Wenn der Benutzer auf den Stammverzeichnis-Pfad gelangt, kann diese Willkommensseite vor der Verzeichnisliste erscheinen.",
+        startList: [
+          "Erstellen Sie Ihre index.html, wenn Sie diese Willkommensseite ersetzen möchten.",
+          "Behalten Sie diese Datei als Fallback für leere Ordner bei.",
+          "Passen Sie Farben, Text und Links nach Bedarf an."
+        ],
+        footerText: "X-LOCALHOST · Willkommensdatei / Startseite"
+      },
+      it: {
+        name: "Italiano",
+        eyebrow: "🟣 FILE DI BENVENUTO • PAGINA DI AVVIO DEL SERVER LOCALE",
+        title: "Benvenuto in X-LOCALHOST",
+        subtitle: "Questo file è la schermata di benvenuto predefinita del server. Se non esiste un index.html, X-LOCALHOST può mostrare questa pagina per spiegare cosa fa il server e come iniziare.",
+        pill1: "Server web locale",
+        pill2: "Serve le cartelle scelte",
+        pill3: "Porta 8080",
+        langTitle: "Cambia lingua",
+        langDesc: "Scegli una delle 28 lingue supportate per cambiare il testo principale di benvenuto.",
+        langLabel: "Lingua",
+        note: "Suggerimento: se vuoi che questa pagina sia quella predefinita, servila quando non c'è un index.html nella cartella.",
+        howTitle: "Come funziona",
+        howSteps: [
+          "L'utente apre la radice del server, ad esempio /.",
+          "X-LOCALHOST verifica se esiste un file principale come index.html.",
+          "Se non esiste, WELCOME.html diventa la pagina predefinita."
+        ],
+        featuresTitle: "Cosa fa X-LOCALHOST",
+        featuresList: [
+          { t: "Server HTTP reale", d: "Agisce come un vero server locale, non solo un visualizzatore di file." },
+          { t: "Cartella selezionata dall'utente", d: "Serve il contenuto da una cartella scelta con SAF." },
+          { t: "Rilevamento MIME", d: "Riconosce i tipi di file in modo che il contenuto venga consegnato correttamente." },
+          { t: "Servizio in background", d: "Può rimanere in esecuzione con una notifica persistente." }
+        ],
+        startTitle: "Avvio rapido",
+        startText: "Apri il selettore di cartelle, scegli il tuo progetto e lascia che il server serva i file da lì. Se l'utente atterra sul percorso radice, questo benvenuto può apparire prima dell'elenco delle directory.",
+        startList: [
+          "Crea il tuo index.html quando vuoi sostituire questo benvenuto.",
+          "Mantieni questo file come fallback per le cartelle vuote.",
+          "Personalizza colori, testo e collegamenti secondo necessità."
+        ],
+        footerText: "X-LOCALHOST · File di benvenuto / Pagina iniziale"
+      },
+      nl: {
+        name: "Nederlands",
+        eyebrow: "🟣 WELKOMSTBESTAND • LOKALE SERVER STARTPAGINA",
+        title: "Welkom bij X-LOCALHOST",
+        subtitle: "Dit bestand is het standaard welkomstscherm van de server. Als er geen index.html is, kan X-LOCALHOST deze pagina tonen om uit te leggen wat de server doet en hoe te starten.",
+        pill1: "Lokale webserver",
+        pill2: "Dient gekozen mappen",
+        pill3: "Poort 8080",
+        langTitle: "Taal wijzigen",
+        langDesc: "Kies een van de 28 ondersteunde talen om de hoofdtekst van de welkomstpagina te wijzigen.",
+        langLabel: "Taal",
+        note: "Tip: als u wilt dat deze pagina de standaardpagina is, serveer deze dan wanneer er geen index.html in de map is.",
+        howTitle: "Hoe het werkt",
+        howSteps: [
+          "De gebruiker opent de serverroot, bijvoorbeeld /.",
+          "X-LOCALHOST controleert of een hoofdbestand zoals index.html bestaat.",
+          "Als het niet bestaat, wordt WELCOME.html de standaardpagina."
+        ],
+        featuresTitle: "Wat X-LOCALHOST doet",
+        featuresList: [
+          { t: "Echte HTTP-server", d: "Gedraagt zich als een volwaardige lokale server, niet alleen een bestandsviewer." },
+          { t: "Door gebruiker geselecteerde map", d: "Dient inhoud vanuit een met SAF gekozen map." },
+          { t: "MIME-detectie", d: "Herkent bestandstypen zodat inhoud correct wordt geleverd." },
+          { t: "Achtergrondservice", d: "Kan blijven draaien met een persistente melding." }
+        ],
+        startTitle: "Snelstart",
+        startText: "Open de mapkiezer, kies uw project en laat de server bestanden van daaruit serveren. Als de gebruiker op het rootpad terechtkomt, kan dit welkom verschijnen vóór de directorylijst.",
+        startList: [
+          "Maak uw index.html aan wanneer u dit welkom wilt vervangen.",
+          "Bewaar dit bestand als een fallback voor lege mappen.",
+          "Pas kleuren, tekst en links naar behoefte aan."
+        ],
+        footerText: "X-LOCALHOST · Welkomstbestand / Startpagina"
+      },
+      ru: {
+        name: "Русский",
+        eyebrow: "🟣 ПРИВЕТСТВЕННЫЙ ФАЙЛ • СТАРТОВАЯ СТРАНИЦА ЛОКАЛЬНОГО СЕРВЕРА",
+        title: "Добро пожаловать в X-LOCALHOST",
+        subtitle: "Этот файл является экраном приветствия сервера по умолчанию. Если index.html отсутствует, X-LOCALHOST может показать эту страницу, чтобы объяснить, что делает сервер и как начать.",
+        pill1: "Локальный веб-сервер",
+        pill2: "Обслуживает выбранные папки",
+        pill3: "Порт 8080",
+        langTitle: "Сменить язык",
+        langDesc: "Выберите один из 28 поддерживаемых языков, чтобы изменить основной текст приветствия.",
+        langLabel: "Язык",
+        note: "Совет: если вы хотите, чтобы эта страница была страницей по умолчанию, используйте ее, когда в папке нет index.html.",
+        howTitle: "Как это работает",
+        howSteps: [
+          "Пользователь открывает корень сервера, например /.",
+          "X-LOCALHOST проверяет, существует ли основной файл, такой как index.html.",
+          "Если он не существует, WELCOME.html становится страницей по умолчанию."
+        ],
+        featuresTitle: "Что делает X-LOCALHOST",
+        featuresList: [
+          { t: "Настоящий HTTP-сервер", d: "Действует как полноценный локальный сервер, а не только просмотрщик файлов." },
+          { t: "Выбранная пользователем папка", d: "Обслуживает контент из папки, выбранной с помощью SAF." },
+          { t: "Определение MIME", d: "Распознает типы файлов, чтобы контент доставлялся правильно." },
+          { t: "Фоновая служба", d: "Может продолжать работать с постоянным уведомлением." }
+        ],
+        startTitle: "Быстрый старт",
+        startText: "Откройте средство выбора папок, выберите свой проект и позвольте серверу обслуживать файлы оттуда. Если пользователь попадает на корневой путь, это приветствие может появиться перед списком каталогов.",
+        startList: [
+          "Создайте свой index.html, когда захотите заменить это приветствие.",
+          "Сохраните этот файл как запасной вариант для пустых папок.",
+          "Настройте цвета, текст и ссылки по мере необходимости."
+        ],
+        footerText: "X-LOCALHOST · Приветственный файл / Стартовая страница"
+      },
+      ja: {
+        name: "日本語",
+        eyebrow: "🟣 ウェルカムファイル • ローカルサーバーのスタートページ",
+        title: "X-LOCALHOSTへようこそ",
+        subtitle: "このファイルはサーバーのデフォルトのウェルカム画面です。index.html が存在しない場合、X-LOCALHOST はこのページを表示して、サーバーの機能と開始方法を説明できます。",
+        pill1: "ローカルWebサーバー",
+        pill2: "選択したフォルダを提供",
+        pill3: "ポート 8080",
+        langTitle: "言語を変更",
+        langDesc: "28のサポートされている言語のいずれかを選択して、メインのウェルカムテキストを切り替えます。",
+        langLabel: "言語",
+        note: "ヒント：このページをデフォルトにしたい場合は、フォルダに index.html がないときにこのページを提供してください。",
+        howTitle: "仕組み",
+        howSteps: [
+          "ユーザーはサーバーのルート（例：/）を開きます。",
+          "X-LOCALHOST は index.html のようなメインファイルが存在するかどうかを確認します。",
+          "存在しない場合、WELCOME.html がデフォルトページになります。"
+        ],
+        featuresTitle: "X-LOCALHOSTの機能",
+        featuresList: [
+          { t: "実際のHTTPサーバー", d: "ファイルビューアとしてだけでなく、適切なローカルサーバーとして機能します。" },
+          { t: "ユーザーが選択したフォルダ", d: "SAFで選択したフォルダからコンテンツを提供します。" },
+          { t: "MIME検出", d: "コンテンツが正しく配信されるようにファイルタイプを認識します。" },
+          { t: "バックグラウンドサービス", d: "永続的な通知で実行を継続できます。" }
+        ],
+        startTitle: "クイックスタート",
+        startText: "フォルダピッカーを開き、プロジェクトを選択して、サーバーにそこからファイルを提供させます。ユーザーがルートパスにアクセスした場合、このウェルカムページはディレクトリリストの前に表示されることがあります。",
+        startList: [
+          "このウェルカムページを置き換えたい場合は、index.html を作成してください。",
+          "空のフォルダのフォールバックとしてこのファイルを保持してください。",
+          "必要に応じて、色、テキスト、リンクをカスタマイズしてください。"
+        ],
+        footerText: "X-LOCALHOST · ウェルカムファイル / スタートページ"
+      },
+      ko: {
+        name: "한국어",
+        eyebrow: "🟣 환영 파일 • 로컬 서버 시작 페이지",
+        title: "X-LOCALHOST에 오신 것을 환영합니다",
+        subtitle: "이 파일은 서버의 기본 환영 화면입니다. index.html이 없으면 X-LOCALHOST는 이 페이지를 표시하여 서버가 무엇을 하는지, 어떻게 시작하는지 설명할 수 있습니다.",
+        pill1: "로컬 웹 서버",
+        pill2: "선택한 폴더 제공",
+        pill3: "포트 8080",
+        langTitle: "언어 변경",
+        langDesc: "28개 지원 언어 중 하나를 선택하여 기본 환영 텍스트를 변경합니다.",
+        langLabel: "언어",
+        note: "팁: 이 페이지를 기본값으로 사용하려면 폴더에 index.html이 없을 때 이 파일을 제공하십시오.",
+        howTitle: "작동 방식",
+        howSteps: [
+          "사용자가 서버 루트(예: /)를 엽니다.",
+          "X-LOCALHOST는 index.html과 같은 기본 파일이 있는지 확인합니다.",
+          "존재하지 않으면 WELCOME.html이 기본 페이지가 됩니다."
+        ],
+        featuresTitle: "X-LOCALHOST의 기능",
+        featuresList: [
+          { t: "실제 HTTP 서버", d: "파일 뷰어뿐만 아니라 적절한 로컬 서버처럼 작동합니다." },
+          { t: "사용자 선택 폴더", d: "SAF로 선택한 폴더에서 콘텐츠를 제공합니다." },
+          { t: "MIME 감지", d: "콘텐츠가 올바르게 전달되도록 파일 형식을 인식합니다." },
+          { t: "백그라운드 서비스", d: "영구 알림으로 계속 실행될 수 있습니다." }
+        ],
+        startTitle: "빠른 시작",
+        startText: "폴더 선택기를 열고 프로젝트를 선택한 다음 서버가 거기에서 파일을 제공하도록 합니다. 사용자가 루트 경로에 도착하면 이 환영 페이지가 디렉토리 목록 앞에 나타날 수 있습니다.",
+        startList: [
+          "이 환영 페이지를 바꾸려면 index.html을 만드십시오.",
+          "빈 폴더의 대체 파일로 이 파일을 유지하십시오.",
+          "필요에 따라 색상, 텍스트 및 링크를 사용자 정의하십시오."
+        ],
+        footerText: "X-LOCALHOST · 환영 파일 / 시작 페이지"
+      },
+      zh: {
+        name: "中文",
+        eyebrow: "🟣 欢迎文件 • 本地服务器启动页面",
+        title: "欢迎来到 X-LOCALHOST",
+        subtitle: "此文件是服务器的默认欢迎屏幕。如果不存在 index.html，X-LOCALHOST 可以显示此页面以解释服务器的功能以及如何启动。",
+        pill1: "本地Web服务器",
+        pill2: "提供选定的文件夹",
+        pill3: "端口 8080",
+        langTitle: "更改语言",
+        langDesc: "选择28种支持的语言之一，以切换主要的欢迎文本。",
+        langLabel: "语言",
+        note: "提示：如果您希望此页面成为默认页面，请在文件夹中没有 index.html 时提供此文件。",
+        howTitle: "工作原理",
+        howSteps: [
+          "用户打开服务器根目录，例如 /。",
+          "X-LOCALHOST 检查是否存在 index.html 等主文件。",
+          "如果不存在，WELCOME.html 将成为默认页面。"
+        ],
+        featuresTitle: "X-LOCALHOST 的功能",
+        featuresList: [
+          { t: "真正的HTTP服务器", d: "像一个合适的本地服务器一样运行，而不仅仅是文件查看器。" },
+          { t: "用户选择的文件夹", d: "从使用 SAF 选择的文件夹提供内容。" },
+          { t: "MIME检测", d: "识别文件类型，以便正确传递内容。" },
+          { t: "后台服务", d: "可以通过持久通知保持运行。" }
+        ],
+        startTitle: "快速开始",
+        startText: "打开文件夹选择器，选择您的项目，然后让服务器从那里提供文件。如果用户访问根路径，此欢迎页面可能会在目录列表之前出现。",
+        startList: [
+          "如果您想替换此欢迎页面，请创建您的 index.html。",
+          "将此文件保留为空文件夹的备用。",
+          "根据需要自定义颜色、文本和链接。"
+        ],
+        footerText: "X-LOCALHOST · 欢迎文件 / 启动页面"
+      },
+      ar: {
+        name: "العربية",
+        eyebrow: "🟣 ملف الترحيب • صفحة بدء تشغيل الخادم المحلي",
+        title: "مرحبًا بك في X-LOCALHOST",
+        subtitle: "هذا الملف هو شاشة الترحيب الافتراضية للخادم. إذا لم يكن هناك index.html، يمكن لـ X-LOCALHOST عرض هذه الصفحة لشرح ما يفعله الخادم وكيفية البدء.",
+        pill1: "خادم ويب محلي",
+        pill2: "يقدم المجلدات المختارة",
+        pill3: "المنفذ 8080",
+        langTitle: "تغيير اللغة",
+        langDesc: "اختر إحدى اللغات الـ 28 المدعومة لتبديل نص الترحيب الرئيسي.",
+        langLabel: "اللغة",
+        note: "نصيحة: إذا كنت تريد أن تكون هذه الصفحة هي الافتراضية، فقدمها عندما لا يكون هناك index.html في المجلد.",
+        howTitle: "كيف يعمل",
+        howSteps: [
+          "يفتح المستخدم جذر الخادم، على سبيل المثال /.",
+          "يتحقق X-LOCALHOST مما إذا كان ملف رئيسي مثل index.html موجودًا.",
+          "إذا لم يكن موجودًا، يصبح WELCOME.html هو الصفحة الافتراضية."
+        ],
+        featuresTitle: "ماذا يفعل X-LOCALHOST",
+        featuresList: [
+          { t: "خادم HTTP حقيقي", d: "يعمل كخادم محلي مناسب، وليس مجرد عارض ملفات." },
+          { t: "مجلد يختاره المستخدم", d: "يقدم المحتوى من مجلد تم اختياره باستخدام SAF." },
+          { t: "الكشف عن MIME", d: "يتعرف على أنواع الملفات بحيث يتم تسليم المحتوى بشكل صحيح." },
+          { t: "خدمة الخلفية", d: "يمكن أن تستمر في العمل مع إشعار دائم." }
+        ],
+        startTitle: "بداية سريعة",
+        startText: "افتح منتقي المجلدات، واختر مشروعك، ودع الخادم يقدم الملفات من هناك. إذا وصل المستخدم إلى المسار الجذر، فقد تظهر هذه الصفحة الترحيبية قبل قائمة الدليل.",
+        startList: [
+          "أنشئ ملف index.html الخاص بك عندما تريد استبدال هذا الترحيب.",
+          "احتفظ بهذا الملف كبديل للمجلدات الفارغة.",
+          "خصص الألوان والنصوص والروابط حسب الحاجة."
+        ],
+        footerText: "X-LOCALHOST · ملف الترحيب / صفحة البدء"
+      },
+      hi: {
+        name: "हिन्दी",
+        eyebrow: "🟣 स्वागत फ़ाइल • स्थानीय सर्वर प्रारंभ पृष्ठ",
+        title: "X-LOCALHOST में आपका स्वागत है",
+        subtitle: "यह फ़ाइल सर्वर की डिफ़ॉल्ट स्वागत स्क्रीन है। यदि index.html मौजूद नहीं है, तो X-LOCALHOST सर्वर क्या करता है और कैसे शुरू करना है, यह समझाने के लिए यह पृष्ठ दिखा सकता है।",
+        pill1: "स्थानीय वेब सर्वर",
+        pill2: "चुने हुए फ़ोल्डर प्रदान करता है",
+        pill3: "पोर्ट 8080",
+        langTitle: "भाषा बदलें",
+        langDesc: "मुख्य स्वागत पाठ को बदलने के लिए 28 समर्थित भाषाओं में से एक चुनें।",
+        langLabel: "भाषा",
+        note: "युक्ति: यदि आप इस पृष्ठ को डिफ़ॉल्ट बनाना चाहते हैं, तो इसे तब परोसें जब फ़ोल्डर में index.html न हो।",
+        howTitle: "यह कैसे काम करता है",
+        howSteps: [
+          "उपयोगकर्ता सर्वर रूट खोलता है, उदाहरण के लिए /।",
+          "X-LOCALHOST जांचता है कि index.html जैसी कोई मुख्य फ़ाइल मौजूद है या नहीं।",
+          "यदि यह मौजूद नहीं है, तो WELCOME.html डिफ़ॉल्ट पृष्ठ बन जाता है।"
+        ],
+        featuresTitle: "X-LOCALHOST क्या करता है",
+        featuresList: [
+          { t: "वास्तविक HTTP सर्वर", d: "यह केवल एक फ़ाइल दर्शक के बजाय एक उचित स्थानीय सर्वर की तरह काम करता है।" },
+          { t: "उपयोगकर्ता-चयनित फ़ोल्डर", d: "SAF के साथ चुने गए फ़ोल्डर से सामग्री प्रदान करता है।" },
+          { t: "MIME पहचान", d: "फ़ाइल प्रकारों को पहचानता है ताकि सामग्री सही ढंग से वितरित हो।" },
+          { t: "पृष्ठभूमि सेवा", d: "एक स्थायी अधिसूचना के साथ चलती रह सकती है।" }
+        ],
+        startTitle: "त्वरित प्रारंभ",
+        startText: "फ़ोल्डर पिकर खोलें, अपनी परियोजना चुनें, और सर्वर को वहां से फ़ाइलें परोसने दें। यदि उपयोगकर्ता रूट पथ पर आता है, तो यह स्वागत निर्देशिका सूची से पहले दिखाई दे सकता है।",
+        startList: [
+          "जब आप इस स्वागत को बदलना चाहते हैं तो अपनी index.html बनाएं।",
+          "खाली फ़ोल्डरों के लिए इस फ़ाइल को फ़ॉलबैक के रूप में रखें।",
+          "आवश्यकतानुसार रंग, पाठ और लिंक अनुकूलित करें।"
+        ],
+        footerText: "X-LOCALHOST · स्वागत फ़ाइल / प्रारंभ पृष्ठ"
+      },
+      bn: {
+        name: "বাংলা",
+        eyebrow: "🟣 স্বাগতম ফাইল • স্থানীয় সার্ভার শুরু পৃষ্ঠা",
+        title: "X-LOCALHOST এ স্বাগতম",
+        subtitle: "এই ফাইলটি সার্ভারের ডিফল্ট স্বাগতম স্ক্রিন। যদি index.html না থাকে, তাহলে X-LOCALHOST এই পৃষ্ঠাটি প্রদর্শন করে সার্ভার কী করে এবং কীভাবে শুরু করতে হয় তা ব্যাখ্যা করতে পারে।",
+        pill1: "স্থানীয় ওয়েব সার্ভার",
+        pill2: "নির্বাচিত ফোল্ডার পরিবেশন করে",
+        pill3: "পোর্ট 8080",
+        langTitle: "ভাষা পরিবর্তন করুন",
+        langDesc: "মূল স্বাগতম পাঠ্য পরিবর্তন করতে 28টি সমর্থিত ভাষার মধ্যে একটি নির্বাচন করুন।",
+        langLabel: "ভাষা",
+        note: "টিপ: আপনি যদি এই পৃষ্ঠাটিকে ডিফল্ট করতে চান, তাহলে ফোল্ডারে index.html না থাকলে এটি পরিবেশন করুন।",
+        howTitle: "এটি কিভাবে কাজ করে",
+        howSteps: [
+          "ব্যবহারকারী সার্ভার রুট খোলে, উদাহরণস্বরূপ /।",
+          "X-LOCALHOST index.html এর মতো একটি প্রধান ফাইল আছে কিনা তা পরীক্ষা করে।",
+          "যদি এটি না থাকে, তাহলে WELCOME.html ডিফল্ট পৃষ্ঠা হয়ে যায়।"
+        ],
+        featuresTitle: "X-LOCALHOST কী করে",
+        featuresList: [
+          { t: "আসল HTTP সার্ভার", d: "এটি কেবল একটি ফাইল ভিউয়ারের পরিবর্তে একটি সঠিক স্থানীয় সার্ভারের মতো কাজ করে।" },
+          { t: "ব্যবহারকারী-নির্বাচিত ফোল্ডার", d: "SAF দিয়ে নির্বাচিত ফোল্ডার থেকে বিষয়বস্তু পরিবেশন করে।" },
+          { t: "MIME সনাক্তকরণ", d: "ফাইল প্রকারগুলি সনাক্ত করে যাতে বিষয়বস্তু সঠিকভাবে বিতরণ করা হয়।" },
+          { t: "ব্যাকগ্রাউন্ড পরিষেবা", d: "একটি স্থায়ী বিজ্ঞপ্তি সহ চলতে পারে।" }
+        ],
+        startTitle: "দ্রুত শুরু",
+        startText: "ফোল্ডার পিকার খুলুন, আপনার প্রকল্প নির্বাচন করুন এবং সার্ভারকে সেখান থেকে ফাইল পরিবেশন করতে দিন। যদি ব্যবহারকারী রুট পাথে আসে, তাহলে এই স্বাগতম ডিরেক্টরি তালিকার আগে প্রদর্শিত হতে পারে।",
+        startList: [
+          "আপনি যখন এই স্বাগতমটি প্রতিস্থাপন করতে চান তখন আপনার index.html তৈরি করুন।",
+          "খালি ফোল্ডারগুলির জন্য এই ফাইলটিকে একটি ফলব্যাক হিসাবে রাখুন।",
+          "প্রয়োজন অনুযায়ী রঙ, পাঠ্য এবং লিঙ্ক কাস্টমাইজ করুন।"
+        ],
+        footerText: "X-LOCALHOST · স্বাগতম ফাইল / শুরু পৃষ্ঠা"
+      },
+      tr: {
+        name: "Türkçe",
+        eyebrow: "🟣 HOŞ GELDİNİZ DOSYASI • YEREL SUNUCU BAŞLANGIÇ SAYFASI",
+        title: "X-LOCALHOST'a Hoş Geldiniz",
+        subtitle: "Bu dosya sunucunun varsayılan hoş geldiniz ekranıdır. index.html yoksa, X-LOCALHOST sunucunun ne yaptığını ve nasıl başlayacağını açıklamak için bu sayfayı gösterebilir.",
+        pill1: "Yerel web sunucusu",
+        pill2: "Seçilen klasörleri sunar",
+        pill3: "Port 8080",
+        langTitle: "Dili değiştir",
+        langDesc: "Ana hoş geldiniz metnini değiştirmek için desteklenen 28 dilden birini seçin.",
+        langLabel: "Dil",
+        note: "İpucu: Bu sayfayı varsayılan yapmak istiyorsanız, klasörde index.html yoksa bu sayfayı sunun.",
+        howTitle: "Nasıl çalışır",
+        howSteps: [
+          "Kullanıcı sunucu kökünü açar, örneğin /.",
+          "X-LOCALHOST, index.html gibi bir ana dosyanın var olup olmadığını kontrol eder.",
+          "Yoksa, WELCOME.html varsayılan sayfa olur."
+        ],
+        featuresTitle: "X-LOCALHOST ne yapar",
+        featuresList: [
+          { t: "Gerçek HTTP sunucusu", d: "Sadece bir dosya görüntüleyici değil, uygun bir yerel sunucu gibi davranır." },
+          { t: "Kullanıcı tarafından seçilen klasör", d: "SAF ile seçilen bir klasörden içerik sunar." },
+          { t: "MIME algılama", d: "İçeriğin doğru şekilde teslim edilmesi için dosya türlerini tanır." },
+          { t: "Arka plan hizmeti", d: "Kalıcı bir bildirimle çalışmaya devam edebilir." }
+        ],
+        startTitle: "Hızlı başlangıç",
+        startText: "Klasör seçiciyi açın, projenizi seçin ve sunucunun oradan dosya sunmasına izin verin. Kullanıcı kök yola gelirse, bu hoş geldiniz dizin listesinden önce görünebilir.",
+        startList: [
+          "Bu hoş geldiniz sayfasını değiştirmek istediğinizde index.html dosyanızı oluşturun.",
+          "Boş klasörler için bu dosyayı bir yedek olarak tutun.",
+          "Gerektiğinde renkleri, metni ve bağlantıları özelleştirin."
+        ],
+        footerText: "X-LOCALHOST · Hoş geldiniz dosyası / Başlangıç sayfası"
+      },
+      pl: {
+        name: "Polski",
+        eyebrow: "🟣 PLIK POWITALNY • STRONA STARTOWA SERWERA LOKALNEGO",
+        title: "Witaj w X-LOCALHOST",
+        subtitle: "Ten plik jest domyślnym ekranem powitalnym serwera. Jeśli nie ma pliku index.html, X-LOCALHOST może wyświetlić tę stronę, aby wyjaśnić, co robi serwer i jak zacząć.",
+        pill1: "Lokalny serwer www",
+        pill2: "Obsługuje wybrane foldery",
+        pill3: "Port 8080",
+        langTitle: "Zmień język",
+        langDesc: "Wybierz jeden z 28 obsługiwanych języków, aby zmienić główny tekst powitalny.",
+        langLabel: "Język",
+        note: "Wskazówka: jeśli chcesz, aby ta strona była domyślna, udostępnij ją, gdy w folderze nie ma pliku index.html.",
+        howTitle: "Jak to działa",
+        howSteps: [
+          "Użytkownik otwiera katalog główny serwera, na przykład /.",
+          "X-LOCALHOST sprawdza, czy istnieje plik główny, taki jak index.html.",
+          "Jeśli nie istnieje, WELCOME.html staje się stroną domyślną."
+        ],
+        featuresTitle: "Co robi X-LOCALHOST",
+        featuresList: [
+          { t: "Prawdziwy serwer HTTP", d: "Działa jak prawdziwy serwer lokalny, a nie tylko przeglądarka plików." },
+          { t: "Folder wybrany przez użytkownika", d: "Obsługuje zawartość z folderu wybranego za pomocą SAF." },
+          { t: "Wykrywanie MIME", d: "Rozpoznaje typy plików, dzięki czemu zawartość jest dostarczana prawidłowo." },
+          { t: "Usługa w tle", d: "Może działać z trwałym powiadomieniem." }
+        ],
+        startTitle: "Szybki start",
+        startText: "Otwórz selektor folderów, wybierz swój projekt i pozwól serwerowi udostępniać pliki stamtąd. Jeśli użytkownik trafi na ścieżkę główną, to powitanie może pojawić się przed listą katalogów.",
+        startList: [
+          "Utwórz swój index.html, gdy chcesz zastąpić to powitanie.",
+          "Zachowaj ten plik jako awaryjny dla pustych folderów.",
+          "Dostosuj kolory, tekst i linki według potrzeb."
+        ],
+        footerText: "X-LOCALHOST · Plik powitalny / Strona startowa"
+      },
+      vi: {
+        name: "Tiếng Việt",
+        eyebrow: "🟣 TỆP CHÀO MỪNG • TRANG KHỞI ĐỘNG MÁY CHỦ CỤC BỘ",
+        title: "Chào mừng đến với X-LOCALHOST",
+        subtitle: "Tệp này là màn hình chào mừng mặc định của máy chủ. Nếu không có index.html, X-LOCALHOST có thể hiển thị trang này để giải thích chức năng của máy chủ và cách bắt đầu.",
+        pill1: "Máy chủ web cục bộ",
+        pill2: "Phục vụ các thư mục đã chọn",
+        pill3: "Cổng 8080",
+        langTitle: "Đổi ngôn ngữ",
+        langDesc: "Chọn một trong 28 ngôn ngữ được hỗ trợ để thay đổi văn bản chào mừng chính.",
+        langLabel: "Ngôn ngữ",
+        note: "Mẹo: nếu bạn muốn trang này là mặc định, hãy phục vụ nó khi không có index.html trong thư mục.",
+        howTitle: "Cách hoạt động",
+        howSteps: [
+          "Người dùng mở thư mục gốc của máy chủ, ví dụ /.",
+          "X-LOCALHOST kiểm tra xem có tệp chính như index.html tồn tại không.",
+          "Nếu không tồn tại, WELCOME.html sẽ trở thành trang mặc định."
+        ],
+        featuresTitle: "X-LOCALHOST làm gì",
+        featuresList: [
+          { t: "Máy chủ HTTP thực", d: "Hoạt động như một máy chủ cục bộ phù hợp, không chỉ là một trình xem tệp." },
+          { t: "Thư mục do người dùng chọn", d: "Phục vụ nội dung từ một thư mục được chọn bằng SAF." },
+          { t: "Phát hiện MIME", d: "Nhận dạng các loại tệp để nội dung được phân phối chính xác." },
+          { t: "Dịch vụ nền", d: "Có thể tiếp tục chạy với thông báo liên tục." }
+        ],
+        startTitle: "Bắt đầu nhanh",
+        startText: "Mở trình chọn thư mục, chọn dự án của bạn và để máy chủ phục vụ các tệp từ đó. Nếu người dùng truy cập đường dẫn gốc, trang chào mừng này có thể xuất hiện trước danh sách thư mục.",
+        startList: [
+          "Tạo index.html của bạn khi bạn muốn thay thế trang chào mừng này.",
+          "Giữ tệp này làm dự phòng cho các thư mục trống.",
+          "Tùy chỉnh màu sắc, văn bản và liên kết nếu cần."
+        ],
+        footerText: "X-LOCALHOST · Tệp chào mừng / Trang khởi động"
+      },
+      id: {
+        name: "Bahasa Indonesia",
+        eyebrow: "🟣 FILE SELAMAT DATANG • HALAMAN AWAL SERVER LOKAL",
+        title: "Selamat Datang di X-LOCALHOST",
+        subtitle: "File ini adalah layar selamat datang default server. Jika tidak ada index.html, X-LOCALHOST dapat menampilkan halaman ini untuk menjelaskan apa yang dilakukan server dan cara memulai.",
+        pill1: "Server web lokal",
+        pill2: "Melayani folder yang dipilih",
+        pill3: "Port 8080",
+        langTitle: "Ganti bahasa",
+        langDesc: "Pilih salah satu dari 28 bahasa yang didukung untuk mengganti teks selamat datang utama.",
+        langLabel: "Bahasa",
+        note: "Tip: jika Anda ingin halaman ini menjadi default, sajikan saat tidak ada index.html di folder.",
+        howTitle: "Bagaimana cara kerjanya",
+        howSteps: [
+          "Pengguna membuka root server, misalnya /.",
+          "X-LOCALHOST memeriksa apakah ada file utama seperti index.html.",
+          "Jika tidak ada, WELCOME.html menjadi halaman default."
+        ],
+        featuresTitle: "Apa yang dilakukan X-LOCALHOST",
+        featuresList: [
+          { t: "Server HTTP nyata", d: "Berfungsi seperti server lokal yang tepat, bukan hanya penampil file." },
+          { t: "Folder yang dipilih pengguna", d: "Melayani konten dari folder yang dipilih dengan SAF." },
+          { t: "Deteksi MIME", d: "Mengenali jenis file agar konten dikirimkan dengan benar." },
+          { t: "Layanan latar belakang", d: "Dapat tetap berjalan dengan notifikasi persisten." }
+        ],
+        startTitle: "Mulai cepat",
+        startText: "Buka pemilih folder, pilih proyek Anda, dan biarkan server menyajikan file dari sana. Jika pengguna mendarat di jalur root, sambutan ini dapat muncul sebelum daftar direktori.",
+        startList: [
+          "Buat index.html Anda saat Anda ingin mengganti sambutan ini.",
+          "Simpan file ini sebagai fallback untuk folder kosong.",
+          "Sesuaikan warna, teks, dan tautan sesuai kebutuhan."
+        ],
+        footerText: "X-LOCALHOST · File selamat datang / Halaman awal"
+      },
+      th: {
+        name: "ไทย",
+        eyebrow: "🟣 ไฟล์ต้อนรับ • หน้าเริ่มต้นเซิร์ฟเวอร์ท้องถิ่น",
+        title: "ยินดีต้อนรับสู่ X-LOCALHOST",
+        subtitle: "ไฟล์นี้คือหน้าจอต้อนรับเริ่มต้นของเซิร์ฟเวอร์ หากไม่มี index.html, X-LOCALHOST สามารถแสดงหน้านี้เพื่ออธิบายว่าเซิร์ฟเวอร์ทำอะไรและจะเริ่มต้นอย่างไร",
+        pill1: "เว็บเซิร์ฟเวอร์ท้องถิ่น",
+        pill2: "ให้บริการโฟลเดอร์ที่เลือก",
+        pill3: "พอร์ต 8080",
+        langTitle: "เปลี่ยนภาษา",
+        langDesc: "เลือกหนึ่งใน 28 ภาษาที่รองรับเพื่อเปลี่ยนข้อความต้อนรับหลัก",
+        langLabel: "ภาษา",
+        note: "เคล็ดลับ: หากคุณต้องการให้หน้านี้เป็นค่าเริ่มต้น ให้บริการหน้านี้เมื่อไม่มี index.html ในโฟลเดอร์",
+        howTitle: "วิธีการทำงาน",
+        howSteps: [
+          "ผู้ใช้เปิดรูทเซิร์ฟเวอร์ เช่น /",
+          "X-LOCALHOST ตรวจสอบว่ามีไฟล์หลักเช่น index.html หรือไม่",
+          "หากไม่มี WELCOME.html จะกลายเป็นหน้าเริ่มต้น"
+        ],
+        featuresTitle: "X-LOCALHOST ทำอะไร",
+        featuresList: [
+          { t: "เซิร์ฟเวอร์ HTTP จริง", d: "ทำหน้าที่เหมือนเซิร์ฟเวอร์ท้องถิ่นที่เหมาะสม ไม่ใช่แค่โปรแกรมดูไฟล์" },
+          { t: "โฟลเดอร์ที่ผู้ใช้เลือก", d: "ให้บริการเนื้อหาจากโฟลเดอร์ที่เลือกด้วย SAF" },
+          { t: "การตรวจจับ MIME", d: "จดจำประเภทไฟล์เพื่อให้เนื้อหาถูกส่งอย่างถูกต้อง" },
+          { t: "บริการเบื้องหลัง", d: "สามารถทำงานต่อไปได้ด้วยการแจ้งเตือนแบบถาวร" }
+        ],
+        startTitle: "เริ่มต้นอย่างรวดเร็ว",
+        startText: "เปิดตัวเลือกโฟลเดอร์ เลือกโครงการของคุณ และให้เซิร์ฟเวอร์ให้บริการไฟล์จากที่นั่น หากผู้ใช้มาถึงเส้นทางรูท หน้าต้อนรับนี้อาจปรากฏขึ้นก่อนรายการไดเรกทอรี",
+        startList: [
+          "สร้าง index.html ของคุณเมื่อคุณต้องการแทนที่หน้าต้อนรับนี้",
+          "เก็บไฟล์นี้ไว้เป็นทางเลือกสำหรับโฟลเดอร์ว่างเปล่า",
+          "ปรับแต่งสี ข้อความ และลิงก์ตามต้องการ"
+        ],
+        footerText: "X-LOCALHOST · ไฟล์ต้อนรับ / หน้าเริ่มต้น"
+      },
+      sv: {
+        name: "Svenska",
+        eyebrow: "🟣 VÄLKOMSTFIL • LOKAL SERVER STARTPAGE",
+        title: "Välkommen till X-LOCALHOST",
+        subtitle: "Denna fil är serverns standardvälkomstskärm. Om det inte finns någon index.html kan X-LOCALHOST visa denna sida för att förklara vad servern gör och hur man startar.",
+        pill1: "Lokal webbserver",
+        pill2: "Serverar valda mappar",
+        pill3: "Port 8080",
+        langTitle: "Ändra språk",
+        langDesc: "Välj ett av de 28 språk som stöds för att ändra huvudvälkomsttexten.",
+        langLabel: "Språk",
+        note: "Tips: om du vill att denna sida ska vara standard, servera den när det inte finns någon index.html i mappen.",
+        howTitle: "Hur det fungerar",
+        howSteps: [
+          "Användaren öppnar serverns rot, till exempel /.",
+          "X-LOCALHOST kontrollerar om en huvudfil som index.html finns.",
+          "Om den inte finns, blir WELCOME.html standardsidan."
+        ],
+        featuresTitle: "Vad X-LOCALHOST gör",
+        featuresList: [
+          { t: "Riktig HTTP-server", d: "Fungerar som en riktig lokal server, inte bara en filvisare." },
+          { t: "Användarvald mapp", d: "Serverar innehåll från en mapp vald med SAF." },
+          { t: "MIME-detektering", d: "Känner igen filtyper så att innehållet levereras korrekt." },
+          { t: "Bakgrundstjänst", d: "Kan fortsätta köras med en ihållande avisering." }
+        ],
+        startTitle: "Snabbstart",
+        startText: "Öppna mappväljaren, välj ditt projekt och låt servern servera filer därifrån. Om användaren hamnar på rotvägen kan detta välkomstmeddelande visas före kataloglistan.",
+        startList: [
+          "Skapa din index.html när du vill ersätta detta välkomstmeddelande.",
+          "Behåll denna fil som en fallback för tomma mappar.",
+          "Anpassa färger, text och länkar efter behov."
+        ],
+        footerText: "X-LOCALHOST · Välkomstfil / Startsida"
+      },
+      no: {
+        name: "Norsk",
+        eyebrow: "🟣 VELKOMSTFIL • LOKAL SERVER START SIDE",
+        title: "Velkommen til X-LOCALHOST",
+        subtitle: "Denne filen er serverens standard velkomstskjerm. Hvis det ikke finnes en index.html, kan X-LOCALHOST vise denne siden for å forklare hva serveren gjør og hvordan du starter.",
+        pill1: "Lokal webserver",
+        pill2: "Serverer valgte mapper",
+        pill3: "Port 8080",
+        langTitle: "Bytt språk",
+        langDesc: "Velg ett av de 28 støttede språkene for å bytte hovedvelkomstteksten.",
+        langLabel: "Språk",
+        note: "Tips: Hvis du vil at denne siden skal være standard, server den når det ikke er en index.html i mappen.",
+        howTitle: "Hvordan det fungerer",
+        howSteps: [
+          "Brukeren åpner serverroten, for eksempel /.",
+          "X-LOCALHOST sjekker om en hovedfil som index.html eksisterer.",
+          "Hvis den ikke eksisterer, blir WELCOME.html standardsiden."
+        ],
+        featuresTitle: "Hva X-LOCALHOST gjør",
+        featuresList: [
+          { t: "Ekte HTTP-server", d: "Fungerer som en skikkelig lokal server, ikke bare en filviser." },
+          { t: "Bruker-valgt mappe", d: "Serverer innhold fra en mappe valgt med SAF." },
+          { t: "MIME-deteksjon", d: "Gjenkjenner filtyper slik at innhold leveres riktig." },
+          { t: "Bakgrunnstjeneste", d: "Kan fortsette å kjøre med et vedvarende varsel." }
+        ],
+        startTitle: "Rask start",
+        startText: "Åpne mappevalgeren, velg prosjektet ditt og la serveren servere filer derfra. Hvis brukeren lander på rotbanen, kan denne velkomsten vises før kataloglisten.",
+        startList: [
+          "Opprett din index.html når du vil erstatte denne velkomsten.",
+          "Behold denne filen som en fallback for tomme mapper.",
+          "Tilpass farger, tekst og lenker etter behov."
+        ],
+        footerText: "X-LOCALHOST · Velkomstfil / Startside"
+      },
+      da: {
+        name: "Dansk",
+        eyebrow: "🟣 VELKOMSTFIL • LOKAL SERVER START SIDE",
+        title: "Velkommen til X-LOCALHOST",
+        subtitle: "Denne fil er serverens standard velkomstskærm. Hvis der ikke er en index.html, kan X-LOCALHOST vise denne side for at forklare, hvad serveren gør, og hvordan man starter.",
+        pill1: "Lokal webserver",
+        pill2: "Serverer valgte mapper",
+        pill3: "Port 8080",
+        langTitle: "Skift sprog",
+        langDesc: "Vælg et af de 28 understøttede sprog for at skifte hovedvelkomstteksten.",
+        langLabel: "Sprog",
+        note: "Tip: hvis du vil have denne side som standard, skal du servere den, når der ikke er en index.html i mappen.",
+        howTitle: "Sådan fungerer det",
+        howSteps: [
+          "Brugeren åbner serverens rod, for eksempel /.",
+          "X-LOCALHOST kontrollerer, om en hovedfil som index.html eksisterer.",
+          "Hvis den ikke eksisterer, bliver WELCOME.html standardsiden."
+        ],
+        featuresTitle: "Hvad X-LOCALHOST gør",
+        featuresList: [
+          { t: "Rigtig HTTP-server", d: "Fungerer som en ordentlig lokal server, ikke kun en filviser." },
+          { t: "Brugerdefineret mappe", d: "Serverer indhold fra en mappe valgt med SAF." },
+          { t: "MIME-detektion", d: "Genkender filtyper, så indhold leveres korrekt." },
+          { t: "Baggrundstjeneste", d: "Kan fortsætte med at køre med en vedvarende meddelelse." }
+        ],
+        startTitle: "Hurtig start",
+        startText: "Åbn mappevælgeren, vælg dit projekt, og lad serveren servere filer derfra. Hvis brugeren lander på rodstien, kan denne velkomst vises før mappevisningen.",
+        startList: [
+          "Opret din index.html, når du vil erstatte denne velkomst.",
+          "Behold denne fil som en fallback for tomme mapper.",
+          "Tilpas farver, tekst og links efter behov."
+        ],
+        footerText: "X-LOCALHOST · Velkomstfil / Startside"
+      },
+      fi: {
+        name: "Suomi",
+        eyebrow: "🟣 TERVETULOA-TIEDOSTO • PAIKALLISEN PALVELIMEN KÄYNNISTYSSIVU",
+        title: "Tervetuloa X-LOCALHOSTiin",
+        subtitle: "Tämä tiedosto on palvelimen oletusarvoinen tervetulonäyttö. Jos index.html-tiedostoa ei ole, X-LOCALHOST voi näyttää tämän sivun selittääkseen, mitä palvelin tekee ja miten se käynnistetään.",
+        pill1: "Paikallinen verkkopalvelin",
+        pill2: "Tarjoaa valittuja kansioita",
+        pill3: "Portti 8080",
+        langTitle: "Vaihda kieli",
+        langDesc: "Valitse yksi 28 tuetusta kielestä vaihtaaksesi päätervetulotekstin.",
+        langLabel: "Kieli",
+        note: "Vinkki: jos haluat tämän sivun olevan oletusarvoinen, tarjoa se, kun kansiossa ei ole index.html-tiedostoa.",
+        howTitle: "Miten se toimii",
+        howSteps: [
+          "Käyttäjä avaa palvelimen juuren, esimerkiksi /.",
+          "X-LOCALHOST tarkistaa, onko olemassa pää tiedostoa, kuten index.html.",
+          "Jos sitä ei ole, WELCOME.htmlista tulee oletussivu."
+        ],
+        featuresTitle: "Mitä X-LOCALHOST tekee",
+        featuresList: [
+          { t: "Todellinen HTTP-palvelin", d: "Toimii oikeana paikallisena palvelimena, ei vain tiedostojen katseluohjelmana." },
+          { t: "Käyttäjän valitsema kansio", d: "Tarjoaa sisältöä SAF:lla valitusta kansiosta." },
+          { t: "MIME-tunnistus", d: "Tunnistaa tiedostotyypit, jotta sisältö toimitetaan oikein." },
+          { t: "Taustapalvelu", d: "Voi jatkaa toimintaansa pysyvällä ilmoituksella." }
+        ],
+        startTitle: "Pika-aloitus",
+        startText: "Avaa kansion valitsin, valitse projektisi ja anna palvelimen tarjota tiedostoja sieltä. Jos käyttäjä saapuu juuripolkuun, tämä tervetuloa voi näkyä ennen hakemistoluetteloa.",
+        startList: [
+          "Luo index.html-tiedostosi, kun haluat korvata tämän tervetulon.",
+          "Pidä tämä tiedosto varana tyhjille kansioille.",
+          "Mukauta värejä, tekstiä ja linkkejä tarpeen mukaan."
+        ],
+        footerText: "X-LOCALHOST · Tervetuloa-tiedosto / Käynnistyssivu"
+      },
+      el: {
+        name: "Ελληνικά",
+        eyebrow: "🟣 ΑΡΧΕΙΟ ΚΑΛΩΣΟΡΙΣΜΑΤΟΣ • ΣΕΛΙΔΑ ΕΚΚΙΝΗΣΗΣ ΤΟΠΙΚΟΥ ΔΙΑΚΟΜΙΣΤΗ",
+        title: "Καλώς ήρθατε στο X-LOCALHOST",
+        subtitle: "Αυτό το αρχείο είναι η προεπιλεγμένη οθόνη καλωσορίσματος του διακομιστή. Εάν δεν υπάρχει index.html, το X-LOCALHOST μπορεί να εμφανίσει αυτήν τη σελίδα για να εξηγήσει τι κάνει ο διακομιστής και πώς να ξεκινήσετε.",
+        pill1: "Τοπικός διακομιστής ιστού",
+        pill2: "Εξυπηρετεί επιλεγμένους φακέλους",
+        pill3: "Θύρα 8080",
+        langTitle: "Αλλαγή γλώσσας",
+        langDesc: "Επιλέξτε μία από τις 28 υποστηριζόμενες γλώσσες για να αλλάξετε το κύριο κείμενο καλωσορίσματος.",
+        langLabel: "Γλώσσα",
+        note: "Συμβουλή: εάν θέλετε αυτή η σελίδα να είναι η προεπιλεγμένη, εξυπηρετήστε την όταν δεν υπάρχει index.html στον φάκελο.",
+        howTitle: "Πώς λειτουργεί",
+        howSteps: [
+          "Ο χρήστης ανοίγει τη ρίζα του διακομιστή, για παράδειγμα /.",
+          "Το X-LOCALHOST ελέγχει αν υπάρχει ένα κύριο αρχείο όπως το index.html.",
+          "Εάν δεν υπάρχει, το WELCOME.html γίνεται η προεπιλεγμένη σελίδα."
+        ],
+        featuresTitle: "Τι κάνει το X-LOCALHOST",
+        featuresList: [
+          { t: "Πραγματικός διακομιστής HTTP", d: "Λειτουργεί ως ένας σωστός τοπικός διακομιστής, όχι μόνο ως πρόγραμμα προβολής αρχείων." },
+          { t: "Φάκελος επιλεγμένος από τον χρήστη", d: "Εξυπηρετεί περιεχόμενο από έναν φάκελο που επιλέχθηκε με SAF." },
+          { t: "Ανίχνευση MIME", d: "Αναγνωρίζει τους τύπους αρχείων ώστε το περιεχόμενο να παραδίδεται σωστά." },
+          { t: "Υπηρεσία παρασκηνίου", d: "Μπορεί να συνεχίσει να εκτελείται με μια μόνιμη ειδοποίηση." }
+        ],
+        startTitle: "Γρήγορη εκκίνηση",
+        startText: "Ανοίξτε τον επιλογέα φακέλων, επιλέξτε το έργο σας και αφήστε τον διακομιστή να εξυπηρετήσει αρχεία από εκεί. Εάν ο χρήστης προσγειωθεί στην αρχική διαδρομή, αυτό το καλωσόρισμα μπορεί να εμφανιστεί πριν από την καταχώριση καταλόγου.",
+        startList: [
+          "Δημιουργήστε το index.html σας όταν θέλετε να αντικαταστήσετε αυτό το καλωσόρισμα.",
+          "Κρατήστε αυτό το αρχείο ως εφεδρικό για κενούς φακέλους.",
+          "Προσαρμόστε χρώματα, κείμενο και συνδέσμους όπως απαιτείται."
+        ],
+        footerText: "X-LOCALHOST · Αρχείο καλωσορίσματος / Σελίδα εκκίνησης"
+      },
+      he: {
+        name: "עברית",
+        eyebrow: "🟣 קובץ ברוכים הבאים • דף התחלה של שרת מקומי",
+        title: "ברוכים הבאים ל-X-LOCALHOST",
+        subtitle: "קובץ זה הוא מסך קבלת הפנים המוגדר כברירת מחדל של השרת. אם אין index.html, X-LOCALHOST יכול להציג דף זה כדי להסביר מה השרת עושה וכיצד להתחיל.",
+        pill1: "שרת אינטרנט מקומי",
+        pill2: "מגיש תיקיות נבחרות",
+        pill3: "פורט 8080",
+        langTitle: "שנה שפה",
+        langDesc: "בחר אחת מ-28 השפות הנתמכות כדי להחליף את טקסט קבלת הפנים הראשי.",
+        langLabel: "שפה",
+        note: "טיפ: אם ברצונך שדף זה יהיה ברירת המחדל, הגש אותו כאשר אין index.html בתיקייה.",
+        howTitle: "איך זה עובד",
+        howSteps: [
+          "המשתמש פותח את שורש השרת, לדוגמה /.",
+          "X-LOCALHOST בודק אם קיים קובץ ראשי כמו index.html.",
+          "אם הוא לא קיים, WELCOME.html הופך לדף ברירת המחדל."
+        ],
+        featuresTitle: "מה X-LOCALHOST עושה",
+        featuresList: [
+          { t: "שרת HTTP אמיתי", d: "פועל כשרת מקומי תקין, לא רק כצופה קבצים." },
+          { t: "תיקייה שנבחרה על ידי המשתמש", d: "מגיש תוכן מתיקייה שנבחרה באמצעות SAF." },
+          { t: "זיהוי MIME", d: "מזהה סוגי קבצים כך שהתוכן יועבר כהלכה." },
+          { t: "שירות רקע", d: "יכול להמשיך לפעול עם התראה מתמשכת." }
+        ],
+        startTitle: "התחלה מהירה",
+        startText: "פתח את בורר התיקיות, בחר את הפרויקט שלך ואפשר לשרת להגיש קבצים משם. אם המשתמש נוחת בנתיב השורש, קבלת פנים זו עשויה להופיע לפני רשימת הספריות.",
+        startList: [
+          "צור את index.html שלך כאשר ברצונך להחליף קבלת פנים זו.",
+          "שמור קובץ זה כגיבוי לתיקיות ריקות.",
+          "התאם אישית צבעים, טקסט וקישורים לפי הצורך."
+        ],
+        footerText: "X-LOCALHOST · קובץ ברוכים הבאים / דף התחלה"
+      },
+      uk: {
+        name: "Українська",
+        eyebrow: "🟣 ФАЙЛ ВІТАННЯ • СТАРТОВА СТОРІНКА ЛОКАЛЬНОГО СЕРВЕРА",
+        title: "Ласкаво просимо до X-LOCALHOST",
+        subtitle: "Цей файл є екраном привітання сервера за замовчуванням. Якщо index.html відсутній, X-LOCALHOST може показати цю сторінку, щоб пояснити, що робить сервер і як почати.",
+        pill1: "Локальний веб-сервер",
+        pill2: "Обслуговує вибрані папки",
+        pill3: "Порт 8080",
+        langTitle: "Змінити мову",
+        langDesc: "Виберіть одну з 28 підтримуваних мов, щоб змінити основний текст привітання.",
+        langLabel: "Мова",
+        note: "Порада: якщо ви хочете, щоб ця сторінка була за замовчуванням, подайте її, коли в папці немає index.html.",
+        howTitle: "Як це працює",
+        howSteps: [
+          "Користувач відкриває корінь сервера, наприклад /.",
+          "X-LOCALHOST перевіряє, чи існує основний файл, такий як index.html.",
+          "Якщо він не існує, WELCOME.html стає сторінкою за замовчуванням."
+        ],
+        featuresTitle: "Що робить X-LOCALHOST",
+        featuresList: [
+          { t: "Справжній HTTP-сервер", d: "Працює як належний локальний сервер, а не лише переглядач файлів." },
+          { t: "Вибрана користувачем папка", d: "Обслуговує вміст із папки, вибраної за допомогою SAF." },
+          { t: "Визначення MIME", d: "Розпізнає типи файлів, щоб вміст доставлявся правильно." },
+          { t: "Фонова служба", d: "Може продовжувати працювати з постійним сповіщенням." }
+        ],
+        startTitle: "Швидкий старт",
+        startText: "Відкрийте засіб вибору папок, виберіть свій проект і дозвольте серверу обслуговувати файли звідти. Якщо користувач потрапляє на кореневий шлях, це привітання може з'явитися перед списком каталогів.",
+        startList: [
+          "Створіть свій index.html, коли захочете замінити це привітання.",
+          "Збережіть цей файл як запасний варіант для порожніх папок.",
+          "Налаштуйте кольори, текст і посилання за потреби."
+        ],
+        footerText: "X-LOCALHOST · Файл вітання / Стартова сторінка"
+      },
+      cs: {
+        name: "Čeština",
+        eyebrow: "🟣 SOUBOR VÍTEJTE • ÚVODNÍ STRÁNKA LOKÁLNÍHO SERVERU",
+        title: "Vítejte v X-LOCALHOST",
+        subtitle: "Tento soubor je výchozí uvítací obrazovkou serveru. Pokud neexistuje index.html, X-LOCALHOST může zobrazit tuto stránku, aby vysvětlil, co server dělá a jak začít.",
+        pill1: "Lokální webový server",
+        pill2: "Obsluhuje vybrané složky",
+        pill3: "Port 8080",
+        langTitle: "Změnit jazyk",
+        langDesc: "Vyberte jeden z 28 podporovaných jazyků pro změnu hlavního uvítacího textu.",
+        langLabel: "Jazyk",
+        note: "Tip: pokud chcete, aby tato stránka byla výchozí, podávejte ji, když ve složce není index.html.",
+        howTitle: "Jak to funguje",
+        howSteps: [
+          "Uživatel otevře kořen serveru, například /.",
+          "X-LOCALHOST zkontroluje, zda existuje hlavní soubor jako index.html.",
+          "Pokud neexistuje, WELCOME.html se stane výchozí stránkou."
+        ],
+        featuresTitle: "Co dělá X-LOCALHOST",
+        featuresList: [
+          { t: "Skutečný HTTP server", d: "Funguje jako správný lokální server, nejen jako prohlížeč souborů." },
+          { t: "Uživatelem vybraná složka", d: "Obsluhuje obsah ze složky vybrané pomocí SAF." },
+          { t: "Detekce MIME", d: "Rozpoznává typy souborů, aby byl obsah doručován správně." },
+          { t: "Služba na pozadí", d: "Může pokračovat v běhu s trvalým oznámením." }
+        ],
+        startTitle: "Rychlý start",
+        startText: "Otevřete výběr složek, vyberte svůj projekt a nechte server obsluhovat soubory odtud. Pokud uživatel přistane na kořenové cestě, toto uvítání se může objevit před seznamem adresářů.",
+        startList: [
+          "Vytvořte svůj index.html, když chcete nahradit toto uvítání.",
+          "Udržujte tento soubor jako záložní pro prázdné složky.",
+          "Přizpůsobte barvy, text a odkazy podle potřeby."
+        ],
+        footerText: "X-LOCALHOST · Soubor vítejte / Úvodní stránka"
+      },
+      ro: {
+        name: "Română",
+        eyebrow: "🟣 FIȘIER DE BUN VENIT • PAGINA DE PORNIRE A SERVERULUI LOCAL",
+        title: "Bun venit la X-LOCALHOST",
+        subtitle: "Acest fișier este ecranul de bun venit implicit al serverului. Dacă nu există un index.html, X-LOCALHOST poate afișa această pagină pentru a explica ce face serverul și cum să începeți.",
+        pill1: "Server web local",
+        pill2: "Servește folderele alese",
+        pill3: "Port 8080",
+        langTitle: "Schimbă limba",
+        langDesc: "Alegeți una dintre cele 28 de limbi acceptate pentru a schimba textul principal de bun venit.",
+        langLabel: "Limba",
+        note: "Sfat: dacă doriți ca această pagină să fie implicită, serviți-o atunci când nu există un index.html în folder.",
+        howTitle: "Cum funcționează",
+        howSteps: [
+          "Utilizatorul deschide rădăcina serverului, de exemplu /.",
+          "X-LOCALHOST verifică dacă există un fișier principal, cum ar fi index.html.",
+          "Dacă nu există, WELCOME.html devine pagina implicită."
+        ],
+        featuresTitle: "Ce face X-LOCALHOST",
+        featuresList: [
+          { t: "Server HTTP real", d: "Funcționează ca un server local adecvat, nu doar ca un vizualizator de fișiere." },
+          { t: "Folder selectat de utilizator", d: "Servește conținut dintr-un folder ales cu SAF." },
+          { t: "Detecție MIME", d: "Recunoaște tipurile de fișiere, astfel încât conținutul să fie livrat corect." },
+          { t: "Serviciu în fundal", d: "Poate continua să ruleze cu o notificare persistentă." }
+        ],
+        startTitle: "Pornire rapidă",
+        startText: "Deschideți selectorul de foldere, alegeți proiectul dvs. și lăsați serverul să servească fișierele de acolo. Dacă utilizatorul ajunge la calea rădăcină, acest bun venit poate apărea înainte de listarea directorului.",
+        startList: [
+          "Creați index.html-ul dvs. atunci când doriți să înlocuiți acest bun venit.",
+          "Păstrați acest fișier ca o rezervă pentru folderele goale.",
+          "Personalizați culorile, textul și linkurile după cum este necesar."
+        ],
+        footerText: "X-LOCALHOST · Fișier de bun venit / Pagina de pornire"
+      },
+      // Add other languages here, using English as fallback for now
+      // The UI is compatible with 28 total choices: ES, EN + 26 more.
+      // For now, we'll use English as the fallback for the remaining 26 languages.
+      // The list of extra languages from pasted_content.txt is:
+      // ["pt","Português"],["fr","Français"],["de","Deutsch"],["it","Italiano"],
+      // ["nl","Nederlands"],["ru","Русский"],["ja","日本語"],["ko","한국어"],
+      // ["zh","中文"],["ar","العربية"],["hi","हिन्दी"],["bn","বাংলা"],
+      // ["tr","Türkçe"],["pl","Polski"],["vi","Tiếng Việt"],["id","Bahasa Indonesia"],
+      // ["th","ไทย"],["sv","Svenska"],["no","Norsk"],["da","Dansk"],
+      // ["fi","Suomi"],["el","Ελληνικά"],["he","עברית"],["uk","Українська"],
+      // ["cs","Čeština"],["ro","Română"]
+    };
+
+    const langSelect = document.getElementById("lang");
+    const elems = {
+      eyebrow: document.getElementById("eyebrow"),
+      title: document.getElementById("title"),
+      subtitle: document.getElementById("subtitle"),
+      pill1: document.getElementById("pill1"),
+      pill2: document.getElementById("pill2"),
+      pill3: document.getElementById("pill3"),
+      langTitle: document.getElementById("langTitle"),
+      langDesc: document.getElementById("langDesc"),
+      langLabel: document.getElementById("langLabel"),
+      note: document.getElementById("note"),
+      howTitle: document.getElementById("howTitle"),
+      howSteps: document.getElementById("howSteps"),
+      featuresTitle: document.getElementById("featuresTitle"),
+      featuresList: document.getElementById("featuresList"),
+      startTitle: document.getElementById("startTitle"),
+      startText: document.getElementById("startText"),
+      startList: document.getElementById("startList"),
+      footerText: document.getElementById("footerText"),
+      copyBtn: document.getElementById("copyBtn"),
+      resetBtn: document.getElementById("resetBtn"),
+    };
+
+    function applyLanguage(langCode) {
+      const langData = translations[langCode] || translations.en; // Fallback to English
+
+      document.documentElement.lang = langCode;
+      elems.eyebrow.textContent = langData.eyebrow;
+      elems.title.textContent = langData.title;
+      elems.subtitle.textContent = langData.subtitle;
+      elems.pill1.textContent = langData.pill1;
+      elems.pill2.textContent = langData.pill2;
+      elems.pill3.textContent = langData.pill3;
+      elems.langTitle.textContent = langData.langTitle;
+      elems.langDesc.textContent = langData.langDesc;
+      elems.langLabel.textContent = langData.langLabel;
+      elems.note.textContent = langData.note;
+      elems.howTitle.textContent = langData.howTitle;
+      elems.featuresTitle.textContent = langData.featuresTitle;
+      elems.startTitle.textContent = langData.startTitle;
+      elems.startText.textContent = langData.startText;
+      elems.footerText.textContent = langData.footerText;
+      elems.copyBtn.textContent = langData.copyBtn || "Copiar nombre"; // Default if not translated
+      elems.resetBtn.textContent = langData.resetBtn || "Reset"; // Default if not translated
+
+      // How it works steps
+      elems.howSteps.innerHTML = "";
+      langData.howSteps.forEach((step, i) => {
+        const div = document.createElement("div");
+        div.className = "step";
+        div.innerHTML = `<div class="num">${i + 1}</div><p>${step}</p>`;
+        elems.howSteps.appendChild(div);
+      });
+
+      // Features list
+      elems.featuresList.innerHTML = "";
+      langData.featuresList.forEach((feature) => {
+        const div = document.createElement("div");
+        div.className = "doc-item";
+        div.innerHTML = `<strong>${feature.t}</strong><p>${feature.d}</p>`;
+        elems.featuresList.appendChild(div);
+      });
+
+      // Quick start list
+      elems.startList.innerHTML = "";
+      langData.startList.forEach((item) => {
+        const li = document.createElement("li");
+        li.textContent = item;
+        elems.startList.appendChild(li);
+      });
+    }
+
+    // Populate language selector
+    for (const langCode in translations) {
+      const option = document.createElement("option");
+      option.value = langCode;
+      option.textContent = translations[langCode].name;
+      langSelect.appendChild(option);
+    }
+
+    // Add extra languages with English fallback
+    const extraLanguages = [
+      ["ar", "العربية"], ["bn", "বাংলা"], ["cs", "Čeština"], ["da", "Dansk"], 
+      ["el", "Ελληνικά"], ["fi", "Suomi"], ["he", "עברית"], ["hi", "हिन्दी"], 
+      ["id", "Bahasa Indonesia"], ["ja", "日本語"], ["ko", "한국어"], ["nl", "Nederlands"], 
+      ["no", "Norsk"], ["pl", "Polski"], ["ro", "Română"], ["ru", "Русский"], 
+      ["sv", "Svenska"], ["th", "ไทย"], ["tr", "Türkçe"], ["uk", "Українська"], 
+      ["vi", "Tiếng Việt"], ["zh", "中文"], 
+      // The original pasted_content.txt had pt, fr, de, it, nl, ru, ja, ko, zh, ar, hi, bn, tr, pl, vi, id, th, sv, no, da, fi, el, he, uk, cs, ro
+      // I've added them above. The total count is 28 (es, en + 26 extra).
+    ];
+
+    extraLanguages.forEach(([code, name]) => {
+      if (!translations[code]) {
+        translations[code] = { ...translations.en, name: name }; // Use English as fallback
+        const option = document.createElement("option");
+        option.value = code;
+        option.textContent = name;
+        langSelect.appendChild(option);
+      }
+    });
+
+    // Event listeners
+    langSelect.addEventListener("change", (e) => {
+      applyLanguage(e.target.value);
+      localStorage.setItem("xlocalhost_lang", e.target.value);
+    });
+
+    elems.copyBtn.addEventListener("click", () => {
+      navigator.clipboard.writeText(window.location.href);
+      alert("URL copiada al portapapeles!");
+    });
+
+    elems.resetBtn.addEventListener("click", () => {
+      localStorage.removeItem("xlocalhost_lang");
+      applyLanguage("es"); // Default to Spanish
+      langSelect.value = "es";
+    });
+
+    // Initial language application
+    const savedLang = localStorage.getItem("xlocalhost_lang");
+    if (savedLang && translations[savedLang]) {
+      langSelect.value = savedLang;
+      applyLanguage(savedLang);
+    } else {
+      applyLanguage("es"); // Default to Spanish
+    }
+  </script>
+</body>
+</html>

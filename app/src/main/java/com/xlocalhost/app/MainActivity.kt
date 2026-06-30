@@ -248,7 +248,8 @@ fun MainScreen(
                 viewModel  = viewModel,
                 onShowLogs = onShowLogs,
                 onStart    = { viewModel.startServer(context) },
-                onStop     = { viewModel.stopServer(context) }
+                onStop     = { viewModel.stopServer(context) },
+                onUpdateServeWelcomeFile = viewModel::updateServeWelcomeFile
             )
         }
 
@@ -364,7 +365,8 @@ fun GeneralSection(
     viewModel: ServerViewModel,
     onShowLogs: () -> Unit,
     onStart: () -> Unit,
-    onStop: () -> Unit
+    onStop: () -> Unit,
+    onUpdateServeWelcomeFile: (Boolean) -> Unit
 ) {
     val config    = uiState.config
     val clipboard = LocalClipboardManager.current
@@ -432,6 +434,10 @@ fun GeneralSection(
                     Icon(Icons.Default.Edit, contentDescription = null, tint = ColDim, modifier = Modifier.size(16.dp))
                 }
             }
+        }
+
+        FlatCheckbox(config.serveWelcomeFile, "Serve WELCOME.html as fallback") {
+            onUpdateServeWelcomeFile(!config.serveWelcomeFile)
         }
 
         Text(

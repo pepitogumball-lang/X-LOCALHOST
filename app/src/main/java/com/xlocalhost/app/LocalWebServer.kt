@@ -35,6 +35,7 @@ class LocalWebServer(
     private val allowSqlite: Boolean = false,
     private val allowDbModify: Boolean = false,
     private val allowCustomSql: Boolean = false,
+    private val serveWelcomeFile: Boolean = false,
 ) : NanoHTTPD(port) {
 
     // ── Session / captcha stores (shared across instances) ────────────────────
@@ -813,6 +814,23 @@ class LocalWebServer(
             if (!allowModification)
                 return newFixedLengthResponse(Status.FORBIDDEN, MIME_PLAINTEXT, "File modification disabled")
             return legacyModify(session, root, path)
+        }
+
+        // Check for index.html or index.htm
+        val indexFile = root.findFile("index.html") ?: root.findFile("index.htm")
+        if (path.isEmpty() && indexFile != null) {
+            return streamWithRange(session, indexFile)
+        }
+
+        // If no index file, and path is empty, serve WELCOME.html from assets if enabled
+        if (path.isEmpty() && serveWelcomeFile) {
+            try {
+                val welcomeStream = context.assets.open("WELCOME.html")
+                return newFixedLengthResponse(Status.OK, "text/html; charset=UTF-8", welcomeStream, welcomeStream.available().toLong())
+            } catch (e: Exception) {
+                // Fallback to directory listing if WELCOME.html not found or error
+                Log.e("X-LOCALHOST", "Error serving WELCOME.html: ${e.message}")
+            }
         }
 
         if (path.isEmpty()) return htmlDirListing(root, "/")
