@@ -212,8 +212,12 @@ fun MainScreen(
         ActivityResultContracts.OpenDocumentTree()
     ) { uri: Uri? ->
         if (uri != null) {
-            val flags = Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
-            context.contentResolver.takePersistableUriPermission(uri, flags)
+            try {
+                val flags = Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+                context.contentResolver.takePersistableUriPermission(uri, flags)
+            } catch (e: Exception) {
+                // Some devices might fail to take persistable permission, we continue anyway
+            }
             viewModel.setFolderUri(uri, uri.lastPathSegment ?: uri.toString())
         }
     }
@@ -277,7 +281,7 @@ fun MainScreen(
                 onShowLogs = onShowLogs,
                 onStart    = { viewModel.startServer(context) },
                 onStop     = { viewModel.stopServer(context) },
-                onUpdateServeWelcomeFile = viewModel::updateServeWelcomeFile
+                onUpdateServeWelcomeFile = { viewModel.updateServeWelcomeFile(it) }
             )
         }
 
@@ -689,28 +693,62 @@ fun IpVersionToggle(preferIpv6: Boolean, onToggle: (Boolean) -> Unit) {
 
 @Composable
 fun SectionHeader(title: String) {
+    val alpha by animateFloatAsState(
+        targetValue = 1f,
+        animationSpec = tween(1000),
+        label = "headerAlpha"
+    )
     Text(
-        text = "- $title",
-        color = ColSection,
-        fontSize = 14.sp,
-        fontWeight = FontWeight.Medium,
-        modifier = Modifier.padding(start = 16.dp, top = 12.dp, bottom = 4.dp)
+        text = "- ${title.uppercase()}",
+        color = ColSection.copy(alpha = alpha),
+        fontSize = 13.sp,
+        fontWeight = FontWeight.Bold,
+        modifier = Modifier.padding(start = 16.dp, top = 16.dp, bottom = 4.dp)
     )
 }
 
 @Composable
 fun FlatCheckbox(checked: Boolean, label: String, enabled: Boolean = true, onCheckedChange: (Boolean) -> Unit) {
+    val backgroundColor by animateColorAsState(
+        targetValue = if (checked && enabled) ColLink.copy(alpha = 0.05f) else Color.Transparent,
+        animationSpec = tween(200),
+        label = "checkboxBg"
+    )
+    
     Row(
-        modifier = Modifier.fillMaxWidth().clickable(enabled = enabled) { onCheckedChange(!checked) },
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(backgroundColor, RoundedCornerShape(4.dp))
+            .clickable(enabled = enabled) { onCheckedChange(!checked) }
+            .padding(vertical = 2.dp, horizontal = 4.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Checkbox(
-            checked = checked,
-            onCheckedChange = null,
-            enabled = enabled,
-            colors = CheckboxDefaults.colors(checkedColor = ColLink, uncheckedColor = ColDim, checkmarkColor = BgMain)
+        val scale by animateFloatAsState(
+            targetValue = if (checked) 1.1f else 1.0f,
+            animationSpec = tween(100),
+            label = "checkboxScale"
         )
-        Text(label, color = if (enabled) ColText else ColDim, fontSize = 14.sp)
+        
+        Box(modifier = Modifier.size(32.dp), contentAlignment = Alignment.Center) {
+            Checkbox(
+                checked = checked,
+                onCheckedChange = null,
+                enabled = enabled,
+                colors = CheckboxDefaults.colors(
+                    checkedColor = ColLink,
+                    uncheckedColor = ColDim,
+                    checkmarkColor = BgMain
+                ),
+                modifier = Modifier.size(20.dp * scale)
+            )
+        }
+        Spacer(modifier = Modifier.width(4.dp))
+        Text(
+            text = label, 
+            color = if (checked && enabled) ColText else ColDim, 
+            fontSize = 14.sp,
+            fontWeight = if (checked && enabled) FontWeight.Medium else FontWeight.Normal
+        )
     }
 }
 
