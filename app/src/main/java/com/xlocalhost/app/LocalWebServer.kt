@@ -11,6 +11,7 @@ import android.graphics.Paint
 import android.net.Uri
 import android.os.Build
 import android.webkit.MimeTypeMap
+import android.util.Log
 import androidx.documentfile.provider.DocumentFile
 import fi.iki.elonen.NanoHTTPD
 import fi.iki.elonen.NanoHTTPD.Response.Status
@@ -35,12 +36,14 @@ class LocalWebServer(
     private val allowSqlite: Boolean = false,
     private val allowDbModify: Boolean = false,
     private val allowCustomSql: Boolean = false,
+    private val corsConfig: CorsConfig? = null,
     private val serveWelcomeFile: Boolean = false,
 ) : NanoHTTPD(port) {
 
     // ── Session / captcha stores (shared across instances) ────────────────────
     data class SessionEntry(val username: String, val role: String, val expiresAt: Long)
     data class CaptchaEntry(val code: String, val expiresAt: Long)
+    data class CorsConfig(val origin: String, val methods: String, val headers: String)
 
     companion object {
         private val sessions  = ConcurrentHashMap<String, SessionEntry>()

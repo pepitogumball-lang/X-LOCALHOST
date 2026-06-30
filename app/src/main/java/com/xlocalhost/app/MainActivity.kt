@@ -323,13 +323,13 @@ fun MainScreen(
                 if (config.configureCors) {
                     Column(modifier = Modifier.padding(start = 32.dp, end = 16.dp)) {
                         CorsField("Allow Origin", config.corsAllowOrigin) { 
-                            viewModel.updateConfig { it.copy(corsAllowOrigin = it) }
+                            viewModel.updateConfig { currentConfig -> currentConfig.copy(corsAllowOrigin = it) }
                         }
                         CorsField("Allow Methods", config.corsAllowMethods) { 
-                            viewModel.updateConfig { it.copy(corsAllowMethods = it) }
+                            viewModel.updateConfig { currentConfig -> currentConfig.copy(corsAllowMethods = it) }
                         }
                         CorsField("Allow Headers", config.corsAllowHeaders) { 
-                            viewModel.updateConfig { it.copy(corsAllowHeaders = it) }
+                            viewModel.updateConfig { currentConfig -> currentConfig.copy(corsAllowHeaders = it) }
                         }
                     }
                 }
