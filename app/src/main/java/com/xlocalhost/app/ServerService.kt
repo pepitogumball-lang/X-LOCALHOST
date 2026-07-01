@@ -60,19 +60,22 @@ class ServerService : Service() {
                 val corsOrigin  = intent.getStringExtra(EXTRA_CORS_ORIGIN)
                 val corsMethods = intent.getStringExtra(EXTRA_CORS_METHODS)
                 val corsHeaders = intent.getStringExtra(EXTRA_CORS_HEADERS)
-                val folderUri = if (uriString != null) Uri.parse(uriString) else {
-                    // Default to internal files dir if no URI provided (File API variant)
+                
+                val folderUri = if (uriString != null && uriString != "null") {
+                    Uri.parse(uriString)
+                } else {
                     Uri.fromFile(applicationContext.filesDir)
                 }
                 
-                if (folderUri == null) {
-                    Log.e(TAG, "Could not resolve folder URI.")
-                    stopSelf()
-                    return START_NOT_STICKY
-                }
                 acquireWakeLock()
                 startForeground(NOTIFICATION_ID, buildNotification(port))
-                val cors = if (corsOrigin != null) LocalWebServer.CorsConfig(corsOrigin, corsMethods ?: "*", corsHeaders ?: "*") else null
+                
+                val cors = if (corsOrigin != null) {
+                    LocalWebServer.CorsConfig(corsOrigin, corsMethods ?: "*", corsHeaders ?: "*")
+                } else {
+                    null
+                }
+                
                 startWebServer(folderUri, port, allowMod, enableSqlite, dbModify, dbCustomSql, cors, serveWelcomeFile)
                 isRunning = true
             }
@@ -105,11 +108,18 @@ class ServerService : Service() {
     ) {
         try {
             webServer?.stop()
-            webServer = LocalWebServer(applicationContext, folderUri, port, allowMod, enableSqlite, dbModify, dbCustomSql, corsConfig, serveWelcomeFile).apply {
+            webServer = LocalWebServer(
+                context = applicationContext, 
+                folderUri = folderUri, 
+                port = port, 
+                allowModification = allowMod, 
+                allowSqlite = enableSqlite, 
+                allowDbModify = dbModify, 
+                allowCustomSql = dbCustomSql, 
+                corsConfig = corsConfig, 
+                serveWelcomeFile = serveWelcomeFile
+            ).apply {
                 onRequestLog = { log ->
-                    // We need a way to communicate back to the ViewModel/Activity
-                    // For now, let's use a broadcast or a shared state if possible.
-                    // Given the current architecture, a broadcast is a simple way.
                     val intent = Intent("com.xlocalhost.app.REQUEST_LOG").apply {
                         putExtra("method", log.method)
                         putExtra("path", log.path)
@@ -119,20 +129,22 @@ class ServerService : Service() {
                         putExtra("ip", log.clientIp)
                         putExtra("started", log.startedAt)
                         putExtra("ended", log.endedAt)
-                        // Headers are maps, better to send them as JSON or serialized
                     }
                     sendBroadcast(intent)
                 }
             }
             webServer?.start()
-            // Persist config so BootReceiver can restart the server after reboot
+            
+            // Persist config
             applicationContext.getSharedPreferences("xlocalhost_prefs", MODE_PRIVATE)
                 .edit()
                 .putString("folder_uri", folderUri.toString())
                 .putInt("port", port)
                 .putBoolean("allow_mod", allowMod)
+                .putBoolean("enable_sqlite", enableSqlite)
                 .apply()
-            Log.i(TAG, "Server started on port $port")
+                
+            Log.i(TAG, "Server started on port $port (SQLite: $enableSqlite)")
         } catch (e: Exception) {
             Log.e(TAG, "Error starting server: ${e.message}", e)
             isRunning = false
@@ -168,7 +180,7 @@ class ServerService : Service() {
 
     private fun createNotificationChannel() {
         val channel = NotificationChannel(
-            CHANNEL_ID, "x-localhost Server", NotificationManager.IMPORTANCE_LOW
+            CHANNEL_ID, "X-LOCALHOST Server", NotificationManager.IMPORTANCE_LOW
         ).apply {
             description = "Local HTTP server running"
             setShowBadge(false)
@@ -193,12 +205,12 @@ class ServerService : Service() {
         )
 
         return NotificationCompat.Builder(this, CHANNEL_ID)
-            .setContentTitle("x-localhost running")
+            .setContentTitle("X-LOCALHOST Live")
             .setContentText("Listening on port $port")
-            .setSmallIcon(R.drawable.ic_server)
+            .setSmallIcon(android.R.drawable.stat_sys_download_done) // Fallback icon
             .setContentIntent(openIntent)
             .setOngoing(true)
-            .addAction(R.drawable.ic_server, "Stop", stopIntent)
+            .addAction(android.R.drawable.ic_menu_close_clear_cancel, "Stop", stopIntent)
             .build()
     }
 }

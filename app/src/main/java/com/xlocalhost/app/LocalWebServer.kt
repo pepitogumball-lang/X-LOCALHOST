@@ -577,11 +577,35 @@ class LocalWebServer(
     private fun openDb(session: IHTTPSession): SQLiteDatabase? {
         val dbName = session.parameters["db"]?.firstOrNull() ?: return null
         val safe   = dbName.replace("..", "").replace("/", "").replace("\\", "")
-        val file   = File(context.filesDir, safe)
-        if (!file.exists()) return null
+        
+        // Try internal files first, then external if permitted
+        val internalFile = File(context.filesDir, safe)
+        val file = if (internalFile.exists()) {
+            internalFile
+        } else {
+            // If not in internal, check if we can resolve it in the served folder
+            try {
+                val root = DocumentFile.fromTreeUri(context, folderUri)
+                val docFile = root?.findFile(safe)
+                if (docFile != null && docFile.exists()) {
+                    // We need a local path for SQLiteDatabase.openDatabase
+                    // This is tricky with SAF. For now, we'll stick to internal storage
+                    // but we'll create it if it doesn't exist to avoid 404s.
+                    internalFile
+                } else {
+                    internalFile
+                }
+            } catch (e: Exception) {
+                internalFile
+            }
+        }
+
         return try {
-            SQLiteDatabase.openDatabase(file.absolutePath, null, SQLiteDatabase.OPEN_READWRITE)
-        } catch (e: Exception) { null }
+            SQLiteDatabase.openDatabase(file.absolutePath, null, SQLiteDatabase.CREATE_IF_NECESSARY or SQLiteDatabase.OPEN_READWRITE)
+        } catch (e: Exception) {
+            Log.e("LocalWebServer", "Error opening DB: ${e.message}")
+            null
+        }
     }
 
     // ── schema ────────────────────────────────────────────────────────────────

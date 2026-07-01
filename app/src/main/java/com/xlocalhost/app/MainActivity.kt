@@ -1,12 +1,15 @@
 package com.xlocalhost.app
 
 import android.Manifest
+import android.content.ClipData
+import android.content.ClipboardManager
+import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
-import android.provider.Settings
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
@@ -47,12 +50,12 @@ import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 
-// ── Corporate Elite Palette (Inspirada en la imagen de referencia) ──────────
+// ── Corporate Elite Palette ────────────────────────────────────────────────
 private val BgDeep      = Color(0xFF090B0D)
 private val BgPanel     = Color(0xFF121417)
 private val BgSurface   = Color(0xFF1A1D21)
-private val AccNeon     = Color(0xFF00D4FF) // Cyan brillante
-private val AccSuccess  = Color(0xFF00FF85) // Verde neón
+private val AccNeon     = Color(0xFF00D4FF)
+private val AccSuccess  = Color(0xFF00FF85)
 private val AccError    = Color(0xFFFF3B30)
 private val TextPrimary = Color(0xFFF0F2F5)
 private val TextSec     = Color(0xFF9BA3AF)
@@ -71,7 +74,7 @@ class MainActivity : ComponentActivity() {
     private val viewModel: ServerViewModel by viewModels()
 
     private val logReceiver = object : android.content.BroadcastReceiver() {
-        override fun onReceive(context: android.content.Context?, intent: android.content.Intent?) {
+        override fun onReceive(context: Context?, intent: Intent?) {
             if (intent?.action == "com.xlocalhost.app.REQUEST_LOG") {
                 val log = LogEntry(
                     method = intent.getStringExtra("method") ?: "",
@@ -97,7 +100,7 @@ class MainActivity : ComponentActivity() {
 
         val filter = android.content.IntentFilter("com.xlocalhost.app.REQUEST_LOG")
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            registerReceiver(logReceiver, filter, android.content.Context.RECEIVER_NOT_EXPORTED)
+            registerReceiver(logReceiver, filter, Context.RECEIVER_NOT_EXPORTED)
         } else {
             registerReceiver(logReceiver, filter)
         }
@@ -176,7 +179,6 @@ fun EliteDashboard(
             .windowInsetsPadding(WindowInsets.safeDrawing)
             .background(BgDeep)
     ) {
-        // --- Header (Inspirado en la imagen) ---
         HeaderSection(uiState.isRunning, onShowLogs)
 
         LazyColumn(
@@ -186,26 +188,45 @@ fun EliteDashboard(
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             item {
-                ServerStatusCard(uiState, onStart = { viewModel.startServer(context) }, onStop = { viewModel.stopServer(context) })
+                ServerStatusCard(
+                    uiState = uiState, 
+                    onStart = { viewModel.startServer(context) }, 
+                    onStop = { viewModel.stopServer(context) }
+                )
             }
 
             item {
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    MetricCard("MEMORY USAGE", "45%", 0.45f, AccNeon, Modifier.weight(1f))
-                    MetricCard("STORAGE", "62%", 0.62f, AccSuccess, Modifier.weight(1f))
+                    MetricCard(
+                        label = "RAM USAGE", 
+                        value = "${(uiState.ramUsage * 100).toInt()}%", 
+                        progress = uiState.ramUsage, 
+                        color = AccNeon, 
+                        modifier = Modifier.weight(1f)
+                    )
+                    MetricCard(
+                        label = "STORAGE", 
+                        value = "${(uiState.storageUsage * 100).toInt()}%", 
+                        progress = uiState.storageUsage, 
+                        color = AccSuccess, 
+                        modifier = Modifier.weight(1f)
+                    )
                 }
             }
 
             item {
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    StatsBox("REQUESTS", "${uiState.requestLogs.size}", Icons.Default.TrendingUp, Modifier.weight(1f))
+                    StatsBox("REQUESTS", "${uiState.totalRequests}", Icons.Default.TrendingUp, Modifier.weight(1f))
                     StatsBox("DATABASE", if (config.enableSqlite) "ACTIVE" else "OFF", Icons.Default.Storage, Modifier.weight(1f))
                 }
             }
 
             item {
                 SectionLabel("Directory Control")
-                DirectoryPanel(config, onPickFolder = { folderPickerLauncher.launch(null) }, onShowVariants = { /* TODO */ })
+                DirectoryPanel(
+                    config = config, 
+                    onPickFolder = { folderPickerLauncher.launch(null) }
+                )
             }
 
             item {
@@ -273,6 +294,8 @@ fun HeaderSection(isRunning: Boolean, onShowLogs: () -> Unit) {
 
 @Composable
 fun ServerStatusCard(uiState: ServerUiState, onStart: () -> Unit, onStop: () -> Unit) {
+    val context = LocalContext.current
+    
     Surface(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(20.dp),
@@ -282,8 +305,19 @@ fun ServerStatusCard(uiState: ServerUiState, onStart: () -> Unit, onStop: () -> 
         Column(modifier = Modifier.padding(24.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Column(modifier = Modifier.weight(1f)) {
-                    Text("LOCAL IP ADDRESS", color = TextSec, fontSize = 10.sp, fontWeight = FontWeight.Bold)
-                    Text(uiState.displayedIp, color = AccNeon, fontSize = 20.sp, fontWeight = FontWeight.ExtraBold)
+                    Text("LOCAL ACCESS URL", color = TextSec, fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                    Text(
+                        text = uiState.serverUrl, 
+                        color = AccNeon, 
+                        fontSize = 18.sp, 
+                        fontWeight = FontWeight.ExtraBold,
+                        modifier = Modifier.clickable {
+                            val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                            val clip = ClipData.newPlainText("Server URL", uiState.serverUrl)
+                            clipboard.setPrimaryClip(clip)
+                            Toast.makeText(context, "URL copiada al portapapeles", Toast.LENGTH_SHORT).show()
+                        }
+                    )
                 }
                 
                 Button(
@@ -301,14 +335,20 @@ fun ServerStatusCard(uiState: ServerUiState, onStart: () -> Unit, onStop: () -> 
                 }
             }
             
-            if (uiState.isRunning) {
-                Spacer(Modifier.height(20.dp))
-                Divider(color = BorderElite, thickness = 0.5.dp)
-                Spacer(Modifier.height(20.dp))
-                Row(horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
-                    SmallMetric("STATUS", "Running", AccSuccess)
-                    SmallMetric("UPTIME", "100%", AccNeon)
-                    SmallMetric("PORT", "8080", TextPrimary)
+            AnimatedVisibility(
+                visible = uiState.isRunning,
+                enter = expandVertically() + fadeIn(),
+                exit = shrinkVertically() + fadeOut()
+            ) {
+                Column {
+                    Spacer(Modifier.height(20.dp))
+                    Divider(color = BorderElite, thickness = 0.5.dp)
+                    Spacer(Modifier.height(20.dp))
+                    Row(horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
+                        SmallMetric("STATUS", "Running", AccSuccess)
+                        SmallMetric("UPTIME", uiState.uptime, AccNeon)
+                        SmallMetric("PORT", "${uiState.config.port}", TextPrimary)
+                    }
                 }
             }
         }
@@ -317,6 +357,11 @@ fun ServerStatusCard(uiState: ServerUiState, onStart: () -> Unit, onStop: () -> 
 
 @Composable
 fun MetricCard(label: String, value: String, progress: Float, color: Color, modifier: Modifier) {
+    val animatedProgress by animateFloatAsState(
+        targetValue = progress,
+        animationSpec = tween(1000, easing = FastOutSlowInEasing)
+    )
+
     Surface(
         modifier = modifier,
         shape = RoundedCornerShape(16.dp),
@@ -329,7 +374,7 @@ fun MetricCard(label: String, value: String, progress: Float, color: Color, modi
             Text(value, color = TextPrimary, fontSize = 18.sp, fontWeight = FontWeight.ExtraBold)
             Spacer(Modifier.height(12.dp))
             LinearProgressIndicator(
-                progress = progress,
+                progress = animatedProgress,
                 modifier = Modifier.fillMaxWidth().height(4.dp).clip(CircleShape),
                 color = color,
                 trackColor = BorderElite
@@ -358,9 +403,11 @@ fun StatsBox(label: String, value: String, icon: ImageVector, modifier: Modifier
 }
 
 @Composable
-fun DirectoryPanel(config: ServerConfig, onPickFolder: () -> Unit, onShowVariants: () -> Unit) {
+fun DirectoryPanel(config: ServerConfig, onPickFolder: () -> Unit) {
     Surface(
-        modifier = Modifier.fillMaxWidth().clickable { if (config.fileAccessVariant == "SAF") onPickFolder() else onShowVariants() },
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onPickFolder() },
         shape = RoundedCornerShape(16.dp),
         color = BgPanel,
         border = BorderStroke(1.dp, BorderElite)
@@ -371,7 +418,7 @@ fun DirectoryPanel(config: ServerConfig, onPickFolder: () -> Unit, onShowVariant
             Column(modifier = Modifier.weight(1f)) {
                 Text("ROOT FOLDER", color = TextSec, fontSize = 9.sp, fontWeight = FontWeight.Bold)
                 Text(
-                    text = if (config.fileAccessVariant == "File API") "System Private" else config.folderDisplayPath.ifEmpty { "Select Path" },
+                    text = if (config.folderDisplayPath.isEmpty()) "No folder selected" else config.folderDisplayPath,
                     color = TextPrimary,
                     fontSize = 14.sp,
                     fontWeight = FontWeight.Bold,
@@ -379,8 +426,28 @@ fun DirectoryPanel(config: ServerConfig, onPickFolder: () -> Unit, onShowVariant
                     overflow = TextOverflow.Ellipsis
                 )
             }
-            Icon(Icons.Default.ChevronRight, contentDescription = null, tint = TextSec)
+            Icon(Icons.Default.Edit, contentDescription = null, tint = TextSec, modifier = Modifier.size(16.dp))
         }
+    }
+}
+
+@Composable
+fun SectionLabel(label: String) {
+    Text(
+        text = label,
+        color = TextSec,
+        fontSize = 11.sp,
+        fontWeight = FontWeight.Black,
+        letterSpacing = 1.sp,
+        modifier = Modifier.padding(top = 8.dp, bottom = 4.dp)
+    )
+}
+
+@Composable
+fun SmallMetric(label: String, value: String, color: Color) {
+    Column {
+        Text(label, color = TextSec, fontSize = 8.sp, fontWeight = FontWeight.Bold)
+        Text(value, color = color, fontSize = 14.sp, fontWeight = FontWeight.ExtraBold)
     }
 }
 
@@ -392,11 +459,22 @@ fun EliteSettingsPanel(config: ServerConfig, viewModel: ServerViewModel) {
         color = BgPanel,
         border = BorderStroke(1.dp, BorderElite)
     ) {
-        Column(modifier = Modifier.padding(8.dp)) {
-            EliteToggle("HTTPS Encryption", config.useTls) { viewModel.updateConfig { it.copy(useTls = !it.useTls) } }
-            EliteToggle("Auth Required", config.requireAuthorization) { viewModel.updateConfig { it.copy(requireAuthorization = !it.requireAuthorization) } }
-            EliteToggle("Rate Limiting", config.requestRateLimit) { viewModel.updateConfig { it.copy(requestRateLimit = !it.requestRateLimit) } }
-            EliteToggle("Welcome Screen", config.serveWelcomeFile) { viewModel.updateServeWelcomeFile(!config.serveWelcomeFile) }
+        Column(modifier = Modifier.padding(16.dp)) {
+            EliteToggle("Allow Modifications", config.allowModification) {
+                viewModel.updateConfig { it.copy(allowModification = it) }
+            }
+            Divider(color = BorderElite, thickness = 0.5.dp, modifier = Modifier.padding(vertical = 12.dp))
+            EliteToggle("Enable SQLite API", config.enableSqlite) {
+                viewModel.updateConfig { it.copy(enableSqlite = it) }
+            }
+            Divider(color = BorderElite, thickness = 0.5.dp, modifier = Modifier.padding(vertical = 12.dp))
+            EliteToggle("Auto-start on Boot", config.autostartOnBoot) {
+                viewModel.updateConfig { it.copy(autostartOnBoot = it) }
+            }
+            Divider(color = BorderElite, thickness = 0.5.dp, modifier = Modifier.padding(vertical = 12.dp))
+            EliteToggle("Enable CORS (*)", config.configureCors) {
+                viewModel.updateConfig { it.copy(configureCors = it) }
+            }
         }
     }
 }
@@ -404,16 +482,17 @@ fun EliteSettingsPanel(config: ServerConfig, viewModel: ServerViewModel) {
 @Composable
 fun EliteToggle(label: String, checked: Boolean, onCheckedChange: (Boolean) -> Unit) {
     Row(
-        modifier = Modifier.fillMaxWidth().clickable { onCheckedChange(!checked) }.padding(12.dp),
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Text(label, color = TextPrimary, fontSize = 14.sp, modifier = Modifier.weight(1f))
+        Text(label, color = TextPrimary, fontSize = 14.sp, fontWeight = FontWeight.Medium)
         Switch(
             checked = checked,
             onCheckedChange = onCheckedChange,
             colors = SwitchDefaults.colors(
-                checkedThumbColor = Color.White,
-                checkedTrackColor = AccNeon,
+                checkedThumbColor = AccNeon,
+                checkedTrackColor = AccNeon.copy(alpha = 0.2f),
                 uncheckedThumbColor = TextSec,
                 uncheckedTrackColor = BgSurface
             )
@@ -422,83 +501,51 @@ fun EliteToggle(label: String, checked: Boolean, onCheckedChange: (Boolean) -> U
 }
 
 @Composable
-fun SmallMetric(label: String, value: String, color: Color) {
-    Column {
-        Text(label, color = TextSec, fontSize = 8.sp, fontWeight = FontWeight.Bold)
-        Text(value, color = color, fontSize = 12.sp, fontWeight = FontWeight.ExtraBold)
-    }
-}
-
-@Composable
-fun SectionLabel(text: String) {
-    Text(
-        text = text.uppercase(),
-        color = AccNeon,
-        fontSize = 10.sp,
-        fontWeight = FontWeight.Black,
-        letterSpacing = 1.5.sp,
-        modifier = Modifier.padding(top = 8.dp, bottom = 4.dp)
-    )
-}
-
-// --- Re-styling Logs Screen to match ---
-@Composable
 fun LogsScreen(uiState: ServerUiState, onBack: () -> Unit, onClear: () -> Unit) {
+    val listState = rememberLazyListState()
+    
+    LaunchedEffect(uiState.logs.size) {
+        if (uiState.logs.isNotEmpty()) {
+            listState.animateScrollToItem(uiState.logs.size - 1)
+        }
+    }
+
     Column(modifier = Modifier.fillMaxSize().background(BgDeep)) {
         Row(
             modifier = Modifier.fillMaxWidth().padding(24.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            IconButton(onClick = onBack, modifier = Modifier.border(1.dp, BorderElite, CircleShape)) {
+            IconButton(onClick = onBack) {
                 Icon(Icons.Default.ArrowBack, contentDescription = null, tint = TextPrimary)
             }
-            Spacer(Modifier.width(16.dp))
-            Text("NETWORK TRAFFIC", fontSize = 18.sp, fontWeight = FontWeight.ExtraBold, color = TextPrimary, modifier = Modifier.weight(1f))
+            Text("SYSTEM TERMINAL", color = TextPrimary, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
             IconButton(onClick = onClear) {
                 Icon(Icons.Default.DeleteSweep, contentDescription = null, tint = AccError)
             }
         }
-
+        
         LazyColumn(
-            modifier = Modifier.fillMaxSize().padding(horizontal = 20.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp)
+            state = listState,
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp)
+                .clip(RoundedCornerShape(12.dp))
+                .background(Color.Black)
+                .border(1.dp, BorderElite, RoundedCornerShape(12.dp))
+                .padding(12.dp)
         ) {
-            items(uiState.requestLogs) { log ->
-                EliteLogCard(log)
+            items(uiState.logs) { log ->
+                Text(
+                    text = log,
+                    color = AccSuccess,
+                    fontFamily = FontFamily.Monospace,
+                    fontSize = 12.sp,
+                    modifier = Modifier.padding(vertical = 2.dp)
+                )
             }
         }
-    }
-}
-
-@Composable
-fun EliteLogCard(log: LogEntry) {
-    Surface(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(12.dp),
-        color = BgPanel,
-        border = BorderStroke(1.dp, BorderElite)
-    ) {
-        Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
-            Box(
-                modifier = Modifier
-                    .size(40.dp)
-                    .clip(RoundedCornerShape(8.dp))
-                    .background(if (log.method == "GET") AccSuccess.copy(alpha = 0.1f) else AccNeon.copy(alpha = 0.1f)),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(log.method.take(1), color = if (log.method == "GET") AccSuccess else AccNeon, fontWeight = FontWeight.Black)
-            }
-            Spacer(Modifier.width(16.dp))
-            Column(modifier = Modifier.weight(1f)) {
-                Text(log.path, color = TextPrimary, fontSize = 13.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                Text("${log.clientIp} • ${log.durationMs}ms", color = TextSec, fontSize = 10.sp)
-            }
-            Text(
-                text = "${log.statusCode}",
-                color = if (log.statusCode < 400) AccSuccess else AccError,
-                fontWeight = FontWeight.ExtraBold,
-                fontSize = 14.sp
-            )
-        }
+        Spacer(Modifier.height(24.dp))
     }
 }

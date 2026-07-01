@@ -1,14 +1,21 @@
 package com.xlocalhost.app
 
+import android.app.ActivityManager
 import android.app.Application
+import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Build
+import android.os.Environment
+import android.os.StatFs
 import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 import java.net.Inet4Address
 import java.net.Inet6Address
 import java.net.NetworkInterface
@@ -57,6 +64,12 @@ data class ServerUiState(
     val dbStatus: String = "Disconnected",
     val dbSize: String = "0.0 KB",
     val dbTables: Int = 0,
+    val ramUsage: Float = 0f,
+    val ramTotal: String = "0 GB",
+    val storageUsage: Float = 0f,
+    val storageTotal: String = "0 GB",
+    val totalRequests: Int = 0,
+    val uptime: String = "100%"
 ) {
     val displayedIp: String get() = if (config.preferIpv6 && localIpV6.isNotEmpty()) localIpV6 else localIpV4
     val serverUrl: String get() {
@@ -74,6 +87,52 @@ class ServerViewModel(application: Application) : AndroidViewModel(application) 
     init {
         refreshNetworkInfo()
         restorePersistedFolder()
+        startMetricsUpdate()
+    }
+
+    private fun startMetricsUpdate() {
+        viewModelScope.launch {
+            while (true) {
+                updateMetrics()
+                delay(3000)
+            }
+        }
+    }
+
+    private fun updateMetrics() {
+        val context = getApplication<Application>()
+        
+        // RAM Metrics
+        val activityManager = context.getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
+        val memoryInfo = ActivityManager.MemoryInfo()
+        activityManager.getMemoryInfo(memoryInfo)
+        val totalRam = memoryInfo.totalMem.toFloat()
+        val availableRam = memoryInfo.availMem.toFloat()
+        val usedRam = totalRam - availableRam
+        val ramPercent = (usedRam / totalRam)
+        val totalRamGb = String.format("%.1f GB", totalRam / (1024 * 1024 * 1024))
+
+        // Storage Metrics
+        val stat = StatFs(Environment.getDataDirectory().path)
+        val blockSize = stat.blockSizeLong
+        val totalBlocks = stat.blockCountLong
+        val availableBlocks = stat.availableBlocksLong
+        val totalStorage = totalBlocks * blockSize
+        val availableStorage = availableBlocks * blockSize
+        val usedStorage = totalStorage - availableStorage
+        val storagePercent = (usedStorage.toFloat() / totalStorage.toFloat())
+        val totalStorageGb = String.format("%.1f GB", totalStorage.toFloat() / (1024 * 1024 * 1024))
+
+        _uiState.update { 
+            it.copy(
+                ramUsage = ramPercent,
+                ramTotal = totalRamGb,
+                storageUsage = storagePercent,
+                storageTotal = totalStorageGb,
+                totalRequests = it.requestLogs.size,
+                isRunning = ServerService.isRunning
+            )
+        }
     }
 
     fun updatePort(port: Int) {
@@ -102,17 +161,15 @@ class ServerViewModel(application: Application) : AndroidViewModel(application) 
         addLog("Carpeta seleccionada: $displayPath")
     }
 
-    fun startServer(context: android.content.Context) {
+    fun startServer(context: Context) {
         val config = _uiState.value.config
-        // Allow starting without a selected folder ONLY if File API is used (uses internal storage)
         if (config.folderUri == null && config.fileAccessVariant != "File API") {
             addLog("Error: select a folder first.")
             return
         }
         refreshNetworkInfo()
 
-        // Persist autostart preference so BootReceiver can read it
-        context.getSharedPreferences("xlocalhost_prefs", android.content.Context.MODE_PRIVATE)
+        context.getSharedPreferences("xlocalhost_prefs", Context.MODE_PRIVATE)
             .edit()
             .putBoolean("autostart_on_boot", config.autostartOnBoot)
             .putBoolean("serve_welcome_file", config.serveWelcomeFile)
@@ -120,17 +177,19 @@ class ServerViewModel(application: Application) : AndroidViewModel(application) 
 
         val intent = Intent(context, ServerService::class.java).apply {
             action = ServerService.ACTION_START
-            putExtra(ServerService.EXTRA_FOLDER_URI, config.folderUri.toString())
+            putExtra(ServerService.EXTRA_FOLDER_URI, config.folderUri?.toString() ?: "null")
             putExtra(ServerService.EXTRA_PORT, config.port)
             putExtra(ServerService.EXTRA_ALLOW_MOD, config.allowModification)
             putExtra(ServerService.EXTRA_ENABLE_SQLITE, config.enableSqlite)
-            putExtra(ServerService.EXTRA_DB_MODIFY, config.enableDbModifyApi)
-            putExtra(ServerService.EXTRA_DB_CUSTOM_SQL, config.enableDbCustomSqlApi)
+            putExtra(ServerService.EXTRA_DB_MODIFY, true) // Enable by default if SQLite is on
+            putExtra(ServerService.EXTRA_DB_CUSTOM_SQL, true) // Enable by default if SQLite is on
             putExtra(ServerService.EXTRA_SERVE_WELCOME_FILE, config.serveWelcomeFile)
+            
+            // Always provide CORS defaults if enabled
             if (config.configureCors) {
-                putExtra(ServerService.EXTRA_CORS_ORIGIN, config.corsAllowOrigin)
-                putExtra(ServerService.EXTRA_CORS_METHODS, config.corsAllowMethods)
-                putExtra(ServerService.EXTRA_CORS_HEADERS, config.corsAllowHeaders)
+                putExtra(ServerService.EXTRA_CORS_ORIGIN, config.corsAllowOrigin.ifEmpty { "*" })
+                putExtra(ServerService.EXTRA_CORS_METHODS, config.corsAllowMethods.ifEmpty { "GET,POST,PUT,DELETE,OPTIONS" })
+                putExtra(ServerService.EXTRA_CORS_HEADERS, config.corsAllowHeaders.ifEmpty { "Content-Type,Authorization" })
             }
         }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -138,13 +197,11 @@ class ServerViewModel(application: Application) : AndroidViewModel(application) 
         } else {
             context.startService(intent)
         }
-        // Instead of immediate update, we'll sync with service state in a loop or similar
-        // For simplicity, let's update it but we should ideally have a more robust sync
         _uiState.update { it.copy(isRunning = true) }
         addLog("Server started → ${_uiState.value.serverUrl}")
     }
 
-    fun stopServer(context: android.content.Context) {
+    fun stopServer(context: Context) {
         val intent = Intent(context, ServerService::class.java).apply {
             action = ServerService.ACTION_STOP
         }
@@ -167,7 +224,6 @@ class ServerViewModel(application: Application) : AndroidViewModel(application) 
     }
 
     fun refreshNetworkInfo() {
-        // Sync running state with service
         if (_uiState.value.isRunning != ServerService.isRunning) {
             _uiState.update { it.copy(isRunning = ServerService.isRunning) }
         }
