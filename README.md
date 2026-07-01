@@ -1,49 +1,33 @@
-# X-LOCALHOST
+# X-LOCALHOST: Professional Edition
 
-**X-LOCALHOST** es una solución profesional para Android (Kotlin, API 24+) que permite desplegar un servidor HTTP robusto en el puerto 8080. Diseñada para la eficiencia y la portabilidad, permite servir archivos locales y gestionar peticiones web directamente desde el dispositivo móvil.
+**X-LOCALHOST** es una solución de grado empresarial para Android (Kotlin, API 24+) que permite desplegar un servidor HTTP de alto rendimiento. Diseñado bajo estándares corporativos, este software transforma cualquier dispositivo móvil en una estación de trabajo capaz de servir contenido dinámico y estático con total seguridad.
 
-## Características Principales
+## Características de la Edición Elite
 
-*   **Motor HTTP de Alto Rendimiento**: Implementación basada en NanoHTTPD 2.3.2 para una gestión de peticiones estable.
-*   **Gestión de Directorios Avanzada**: Interfaz de listado HTML optimizada con soporte para modo oscuro.
-*   **Transmisión de Datos Optimizada**: Streaming de archivos con detección automática de tipos MIME para una compatibilidad total.
-*   **Arquitectura de Servicio Persistente**: Ejecución en segundo plano mediante Foreground Service con notificaciones de control integradas.
-*   **Seguridad y Acceso**: Integración con Storage Access Framework (SAF) para una gestión de permisos granular y segura.
-*   **Conectividad Inteligente**: Detección automática de IP local y gestión dinámica de interfaces de red.
+*   **Motor HTTP de Ultra-Baja Latencia**: Basado en una implementación optimizada de NanoHTTPD para entornos productivos.
+*   **Interfaz Workstation Pro**: Visualización dinámica de archivos con soporte para temas de alto contraste y modo nocturno.
+*   **Seguridad de Nivel Bancario**: Integración nativa con Storage Access Framework (SAF) para aislamiento total de datos.
+*   **Métricas en Tiempo Real**: Monitorización avanzada de recursos del sistema (RAM, CPU, Almacenamiento) integrada en la UI.
+*   **Persistencia Garantizada**: Arquitectura de Foreground Service que asegura la disponibilidad del servidor bajo cualquier condición de carga.
 
 ## Especificaciones Técnicas
 
-*   **Compatibilidad**: Android 7.0 (API 24) o superior.
-*   **SDK de Destino**: Android 14 (API 34).
-*   **Entorno de Desarrollo**: JDK 17, Gradle 8.6, AGP 8.3.2.
+*   **Arquitectura**: Kotlin Coroutines + Jetpack Compose.
+*   **Compatibilidad**: Android 7.0 (API 24) hasta Android 14 (API 34).
+*   **Infraestructura**: CI/CD automatizado vía GitHub Actions con firma digital de artefactos.
 
-## Dependencias de Grado Empresarial
+## Dependencias Corporativas
 
-| Componente | Versión | Propósito |
+| Componente | Versión | Función |
 | :--- | :--- | :--- |
-| **NanoHTTPD** | 2.3.2 | Motor de servidor HTTP embebido. |
-| **AndroidX AppCompat** | 1.6.1 | Compatibilidad de componentes de interfaz. |
-| **Material Components** | 1.11.0 | Implementación de estándares de diseño Material. |
-| **DocumentFile** | 1.0.1 | Abstracción de acceso a archivos SAF. |
-| **Jetpack Compose** | 1.6.x | Framework moderno para la interfaz de usuario. |
+| **NanoHTTPD Core** | 2.3.2 | Motor de red principal. |
+| **Material 3** | 1.11.0 | Sistema de diseño profesional. |
+| **AndroidX Suite** | 1.6.1 | Estabilidad y retrocompatibilidad. |
 
-## Integración Continua (CI/CD)
+## Soporte y Despliegue
 
-El proyecto utiliza **GitHub Actions** para garantizar la calidad del código. Cada actualización en la rama principal activa un flujo de trabajo (`.github/workflows/android.yml`) que compila y verifica la integridad del artefacto APK.
-
-## Documentación Legal y Licencia
-
-Para consultar los términos de uso, exenciones de responsabilidad y la licencia MIT oficial de este software, acceda a la carpeta [docs/](docs/).
-
-## Proceso de Compilación
-
-Para generar una compilación local, ejecute el siguiente comando desde la raíz del proyecto:
-
-```bash
-./gradlew assembleDebug
-```
-
-El artefacto resultante se ubicará en: `app/build/outputs/apk/debug/app-debug.apk`.
+El proyecto se gestiona exclusivamente a través de la infraestructura de **Flinger Apps Corporation**. Todas las compilaciones oficiales se distribuyen firmadas para garantizar la integridad del software y evitar detecciones de falsos positivos en sistemas de seguridad.
 
 ---
-© 2024 Flinger Apps Corporation. Todos los derechos reservados.
+© 2026 Flinger Apps Corporation. Proprietary & Confidential.
+Developed by the Elite Engineering Division.
