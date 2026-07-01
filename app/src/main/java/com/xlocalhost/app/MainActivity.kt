@@ -283,7 +283,7 @@ fun ServerStatusCard(uiState: ServerUiState, onStart: () -> Unit, onStop: () -> 
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Column(modifier = Modifier.weight(1f)) {
                     Text("LOCAL IP ADDRESS", color = TextSec, fontSize = 10.sp, fontWeight = FontWeight.Bold)
-                    Text(uiState.localIp, color = AccNeon, fontSize = 20.sp, fontWeight = FontWeight.ExtraBold)
+                    Text(uiState.displayedIp, color = AccNeon, fontSize = 20.sp, fontWeight = FontWeight.ExtraBold)
                 }
                 
                 Button(
